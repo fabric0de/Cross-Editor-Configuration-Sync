@@ -1,0 +1,101 @@
+{
+  "name": "cross-editor-configuration-sync",
+  "displayName": "Cross-Editor Configuration Sync",
+  "description": "Sync your settings, keybindings, snippets, and profiles across different IDEs (VS Code, Cursor, Antigravity, Windsurf, VSCodium, IDX)",
+  "version": "0.0.1",
+  "publisher": "fabric0de",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fabric0de/Cross-Editor-Configuration-Sync"
+  },
+  "icon": "resources/cecs-icon.png",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Cross-Editor Configuration Sync",
+      "properties": {
+        "cecs.customUserDataDir": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Absolute path to the user data directory (User/ folder). If set, this overrides the auto-detection logic. \n\nExample: `/Users/username/.config/VSCodium/User`"
+        },
+        "cecs.localBackupPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Absolute path to the local backup directory. If empty, defaults to `~/.cecs/config.json`."
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "cecs-sidebar",
+          "title": "CECS",
+          "icon": "resources/cecs-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "cecs-sidebar": [
+        {
+          "type": "webview",
+          "id": "cecs-sidebar-view",
+          "name": "Configuration Sync",
+          "icon": "resources/cecs-icon.svg"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "cecs.push",
+        "title": "CECS: Push (Upload Settings)"
+      },
+      {
+        "command": "cecs.pull",
+        "title": "CECS: Pull (Download Settings)"
+      },
+      {
+        "command": "cecs.sync",
+        "title": "CECS: Sync (Push + Pull)"
+      },
+      {
+        "command": "cecs.openSetup",
+        "title": "CECS: Open Setup"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "20.2.5",
+    "@types/vscode": "^1.80.0",
+    "@typescript-eslint/eslint-plugin": "^5.59.8",
+    "@typescript-eslint/parser": "^5.59.8",
+    "@vscode/test-electron": "^2.3.2",
+    "eslint": "^8.41.0",
+    "glob": "^8.1.0",
+    "mocha": "^10.2.0",
+    "typescript": "^5.1.3"
+  },
+  "dependencies": {
+    "@octokit/rest": "^20.0.0",
+    "jsonc-parser": "^3.3.1"
+  }
+}
