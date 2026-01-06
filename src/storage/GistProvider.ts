@@ -4,7 +4,7 @@ import { IStorageProvider, EditorConfig } from './IStorageProvider';
 export class GistProvider implements IStorageProvider {
     private octokit?: Octokit;
     private gistId?: string;
-    private connected: boolean = false;
+    private connected = false;
 
     async connect(credentials: { token: string; gistId?: string }): Promise<void> {
         this.octokit = new Octokit({
@@ -28,12 +28,16 @@ export class GistProvider implements IStorageProvider {
                 public: false,
                 files: {
                     'config.json': {
-                        content: JSON.stringify({
-                            settings: {},
-                            keybindings: [],
-                            snippets: {},
-                            extensions: []
-                        }, null, 2)
+                        content: JSON.stringify(
+                            {
+                                settings: {},
+                                keybindings: [],
+                                snippets: {},
+                                extensions: []
+                            },
+                            null,
+                            2
+                        )
                     }
                 }
             });

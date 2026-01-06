@@ -9,7 +9,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Register Sidebar Provider
     const sidebarProvider = new SidebarProvider(context.extensionUri, context.secrets);
     context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider("cecs-sidebar-view", sidebarProvider)
+        vscode.window.registerWebviewViewProvider('cecs-sidebar-view', sidebarProvider)
     );
 
     context.subscriptions.push(
@@ -43,4 +43,7 @@ export function activate(context: vscode.ExtensionContext) {
     );
 }
 
-export function deactivate() { }
+// This method is called when your extension is deactivated
+export function deactivate() {
+    // Clean up resources if necessary
+}

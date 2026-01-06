@@ -5,8 +5,8 @@ import * as vscode from 'vscode';
 import { IStorageProvider, EditorConfig } from './IStorageProvider';
 
 export class LocalFileProvider implements IStorageProvider {
-    private filePath: string = '';
-    private connected: boolean = false;
+    private filePath = '';
+    private connected = false;
 
     constructor() {
         this.updateFilePath();
@@ -30,10 +30,10 @@ export class LocalFileProvider implements IStorageProvider {
         }
     }
 
-    async connect(credentials?: any): Promise<void> {
+    async connect(_credentials?: any): Promise<void> {
         // 경로 재확인 (설정이 변경되었을 수 있음)
         this.updateFilePath();
-        
+
         // 디렉토리 생성
         const dir = path.dirname(this.filePath);
         if (!fs.existsSync(dir)) {

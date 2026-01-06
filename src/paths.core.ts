@@ -33,10 +33,10 @@ export function determineEditorType(appName: string, idxWorkspaceUrl?: string): 
 }
 
 export function determineUserDataDir(
-    editor: EditorType, 
+    editor: EditorType,
     appName: string,
-    platform: string, 
-    home: string, 
+    platform: string,
+    home: string,
     customUserDataDir?: string,
     env: any = {}
 ): string {
@@ -60,12 +60,13 @@ export function determineUserDataDir(
             case EditorType.IDX:
                 return env.IDX_USER_DATA_DIR || path.join(home, '.config', 'idx', 'User');
             case EditorType.Unknown:
-            default:
+            default: {
                 const appNameClean = appName.replace(/\s+/g, '');
                 if (appNameClean) {
-                     return path.join(home, 'Library', 'Application Support', appNameClean, 'User');
+                    return path.join(home, 'Library', 'Application Support', appNameClean, 'User');
                 }
                 throw new Error(`Unsupported editor type: ${editor}`);
+            }
         }
     }
 
@@ -86,12 +87,13 @@ export function determineUserDataDir(
             case EditorType.IDX:
                 return env.IDX_USER_DATA_DIR || path.join(appData, 'IDX', 'User');
             case EditorType.Unknown:
-            default:
-                 const appNameClean = appName.replace(/\s+/g, '');
-                 if (appNameClean) {
-                      return path.join(appData, appNameClean, 'User');
-                 }
+            default: {
+                const appNameClean = appName.replace(/\s+/g, '');
+                if (appNameClean) {
+                    return path.join(appData, appNameClean, 'User');
+                }
                 throw new Error(`Unsupported editor type: ${editor}`);
+            }
         }
     }
 
@@ -112,12 +114,13 @@ export function determineUserDataDir(
             case EditorType.IDX:
                 return String(env.IDX_USER_DATA_DIR);
             case EditorType.Unknown:
-            default:
-                 const appNameClean = appName.replace(/\s+/g, '');
-                 if (appNameClean) {
-                      return path.join(config, appNameClean, 'User');
-                 }
+            default: {
+                const appNameClean = appName.replace(/\s+/g, '');
+                if (appNameClean) {
+                    return path.join(config, appNameClean, 'User');
+                }
                 throw new Error(`Unsupported editor type: ${editor}`);
+            }
         }
     }
 

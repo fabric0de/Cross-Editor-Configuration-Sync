@@ -5,8 +5,7 @@ import { LocalFileProvider } from '../storage/LocalFileProvider';
 import { IStorageProvider, EditorConfig, SavedProvider } from '../storage/IStorageProvider';
 
 export class SyncManager {
-
-    constructor(private readonly secrets: SecretStorage) { }
+    constructor(private readonly secrets: SecretStorage) {}
 
     /**
      * 저장된 모든 Provider의 인스턴스를 초기화하여 반환
@@ -48,9 +47,11 @@ export class SyncManager {
         for (const saved of savedProviders) {
             try {
                 if (saved.type === 'gist' || saved.type === 'github') {
-                    if (!token) continue; // Skip if no token
+                    if (!token) {
+                        continue;
+                    } // Skip if no token
                     const p = new GistProvider();
-                    
+
                     try {
                         await p.connect({ token, gistId });
                     } catch (error: any) {
@@ -63,13 +64,13 @@ export class SyncManager {
                             throw error;
                         }
                     }
-                    
+
                     // Update Gist ID if missing or recreated
-                    if (p.getGistId()) {
-                        await this.secrets.store('cecs_gist_id', p.getGistId()!);
+                    const newGistId = p.getGistId();
+                    if (newGistId) {
+                        await this.secrets.store('cecs_gist_id', newGistId);
                     }
                     instances.push(p);
-
                 } else if (saved.type === 'local') {
                     const p = new LocalFileProvider();
                     // If specific config overrides exist, we could pass them here
@@ -99,11 +100,13 @@ export class SyncManager {
             const config = await extractConfig();
             const providers = await this.initProviders();
 
-            const results = await Promise.allSettled(providers.map(p => p.write(config)));
+            const results = await Promise.allSettled(providers.map((p) => p.write(config)));
 
-            const failed = results.filter(r => r.status === 'rejected');
+            const failed = results.filter((r) => r.status === 'rejected');
             if (failed.length > 0) {
-                window.showWarningMessage(`Some providers failed (${failed.length}/${providers.length})`);
+                window.showWarningMessage(
+                    `Some providers failed (${failed.length}/${providers.length})`
+                );
             } else {
                 window.showInformationMessage('✅ All providers updated!');
             }
@@ -123,14 +126,13 @@ export class SyncManager {
 
             const providers = await this.initProviders();
             let config: EditorConfig | null = null;
-            let successProvider = '';
 
             for (const p of providers) {
                 try {
                     const c = await p.read();
                     if (c) {
                         config = c;
-                        // successProvider = p.constructor.name; 
+                        // successProvider = p.constructor.name;
                         break; // Found valid config
                     }
                 } catch (e) {

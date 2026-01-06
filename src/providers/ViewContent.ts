@@ -1,5 +1,5 @@
-import { Webview, Uri } from "vscode";
-import { getNonce } from "../panels/getNonce";
+import { Webview, Uri } from 'vscode';
+import { getNonce } from '../panels/getNonce';
 
 export function getHtmlForWebview(webview: Webview, extensionUri: Uri): string {
     const nonce = getNonce();
