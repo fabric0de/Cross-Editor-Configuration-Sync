@@ -19,10 +19,6 @@ const config = {
     sourcemap: watch,
     logLevel: "info",
     mainFields: ["module", "main"],
-    // Explicitly point to ESM version of jsonc-parser if it helps
-    alias: {
-        "jsonc-parser": path.resolve(__dirname, "node_modules/jsonc-parser/lib/esm/main.js"),
-    },
 };
 
 async function main() {

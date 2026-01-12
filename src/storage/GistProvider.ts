@@ -11,18 +11,18 @@ export class GistProvider implements IStorageProvider {
             auth: credentials.token
         });
 
-        // Gist ID가 제공되면 사용, 아니면 새로 생성
+        // Use Gist ID if provided, otherwise create a new one
         if (credentials.gistId) {
             this.gistId = credentials.gistId;
-            // 유효성 검증
+            // Validation
             try {
                 await this.octokit.gists.get({ gist_id: this.gistId });
                 this.connected = true;
-            } catch (error) {
-                throw new Error('유효하지 않은 Gist ID입니다.');
+            } catch {
+                throw new Error('Invalid Gist ID.');
             }
         } else {
-            // 새 Gist 생성
+            // Create new Gist
             const response = await this.octokit.gists.create({
                 description: 'CECS Configuration Sync',
                 public: false,
@@ -48,7 +48,7 @@ export class GistProvider implements IStorageProvider {
 
     async read(): Promise<EditorConfig | null> {
         if (!this.octokit || !this.gistId) {
-            throw new Error('먼저 connect()를 호출하세요.');
+            throw new Error('Please call connect() first.');
         }
 
         const response = await this.octokit.gists.get({
@@ -66,7 +66,7 @@ export class GistProvider implements IStorageProvider {
 
     async write(config: EditorConfig): Promise<void> {
         if (!this.octokit || !this.gistId) {
-            throw new Error('먼저 connect()를 호출하세요.');
+            throw new Error('Please call connect() first.');
         }
 
         // Save entire config as a single file (same format as LocalFileProvider)

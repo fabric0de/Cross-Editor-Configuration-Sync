@@ -1,11 +1,11 @@
 import { Webview, Uri } from 'vscode';
 import { getNonce } from '../panels/getNonce';
 
-export function getHtmlForWebview(webview: Webview, extensionUri: Uri): string {
+export function getHtmlForWebview(webview: Webview, _extensionUri: Uri): string {
     const nonce = getNonce();
 
     return `<!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,315 +14,300 @@ export function getHtmlForWebview(webview: Webview, extensionUri: Uri): string {
     <style>
       :root {
         --container-padding: 16px;
-        --input-bg: var(--vscode-input-background);
-        --input-fg: var(--vscode-input-foreground);
-        --input-border: var(--vscode-input-border);
+        --radius: 8px;
+        --glass-bg: rgba(255, 255, 255, 0.05);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --accent: var(--vscode-button-background);
+        --accent-hover: var(--vscode-button-hoverBackground);
       }
       body {
         padding: 0;
         color: var(--vscode-foreground);
         font-family: var(--vscode-font-family);
-        font-weight: var(--vscode-font-weight);
-        font-size: var(--vscode-font-size);
-        background-color: var(--vscode-editor-background); 
+        background-color: var(--vscode-editor-background);
+        overflow-x: hidden;
       }
-      /* Responsive Layout */
       .container {
         padding: var(--container-padding);
         max-width: 800px;
         margin: 0 auto;
+        animation: fadeIn 0.5s ease;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
       }
 
-      /* Sections & Accordions */
+      /* Floating Status Indicator */
+      #syncingIndicator {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: var(--accent);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: bold;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        display: none;
+        align-items: center;
+        gap: 8px;
+        z-index: 1000;
+        animation: slideUp 0.3s ease;
+      }
+      @keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      .spinner {
+        width: 12px;
+        height: 12px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      /* Modern Cards (Glassmorphism inspired) */
+      .provider-item {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius);
+        padding: 12px;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.2s ease;
+        backdrop-filter: blur(5px);
+      }
+      .provider-item:hover {
+        border-color: var(--accent);
+        transform: scale(1.02);
+      }
+
       .section-header {
         cursor: pointer;
         padding: 12px;
-        background-color: var(--vscode-sideBarSectionHeader-background);
-        color: var(--vscode-sideBarSectionHeader-foreground);
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius);
         font-weight: bold;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border: 1px solid var(--vscode-sideBarSectionHeader-border);
-        margin-top: 8px;
-        border-radius: 4px;
+        margin-top: 12px;
+        transition: background 0.2s;
       }
       .section-header:hover {
-          background-color: var(--vscode-list-hoverBackground);
-      }
-      .section-content {
-        padding: 12px;
-        background-color: var(--vscode-sideBar-background);
-        border: 1px solid var(--vscode-sideBarSectionHeader-border);
-        border-top: none;
-        display: none;
-        margin-bottom: 8px;
-      }
-      .section-content.active {
-        display: block;
-      }
-
-      /* GitHub Logo in section header */
-      .github-logo {
-        width: 20px;
-        height: 20px;
-        vertical-align: middle;
-        margin-right: 8px;
-      }
-
-      /* Buttons */
-      button {
-        border: none;
-        padding: 10px 14px;
-        text-align: center;
-        display: block;
-        width: 100%;
-        margin-bottom: 10px;
-        cursor: pointer;
-        background-color: var(--vscode-button-background);
-        color: var(--vscode-button-foreground);
-        font-family: var(--vscode-font-family);
-        border-radius: 2px;
-        font-weight: 500;
-        transition: background-color 0.2s;
-      }
-      button:hover {
-        background-color: var(--vscode-button-hoverBackground);
-      }
-      button.secondary {
-        background-color: var(--vscode-button-secondaryBackground);
-        color: var(--vscode-button-secondaryForeground);
-      }
-      button.secondary:hover {
-        background-color: var(--vscode-button-secondaryHoverBackground);
+        background: rgba(255,255,255,0.1);
       }
       
-      /* Provider List (Card Style) */
-      .provider-list {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        margin-bottom: 20px;
+      .section-content {
+        padding: 16px;
+        background: rgba(0,0,0,0.2);
+        border: 1px solid var(--glass-border);
+        border-top: none;
+        border-radius: 0 0 var(--radius) var(--radius);
+        display: none;
+        margin-top: -4px;
       }
-      .provider-item {
-        background-color: var(--vscode-input-background);
-        border: 1px solid var(--vscode-input-border);
-        border-radius: 4px;
-        padding: 10px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+      .section-content.active { display: block; animation: slideDown 0.2s ease; }
+      @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-5px); }
+        to { opacity: 1; transform: translateY(0); }
       }
-      .provider-info {
-        display: flex;
-        flex-direction: column;
-      }
-      .provider-type {
-        font-weight: bold;
-        font-size: 0.9em;
-      }
-      .provider-detail {
-        font-size: 0.8em;
-        opacity: 0.8;
-      }
-      .remove-btn {
-        background: none;
+
+      /* Buttons & Inputs */
+      button {
         border: none;
-        color: var(--vscode-errorForeground);
+        padding: 10px 16px;
+        border-radius: var(--radius);
+        background: var(--accent);
+        color: var(--vscode-button-foreground);
+        font-weight: 500;
         cursor: pointer;
-        padding: 4px;
-        width: auto;
-        margin: 0;
+        width: 100%;
+        margin-bottom: 8px;
+        transition: filter 0.2s;
       }
-      .remove-btn:hover {
-        background-color: var(--vscode-list-hoverBackground);
+      button:hover { filter: brightness(1.2); }
+      button.secondary {
+        background: var(--vscode-button-secondaryBackground);
+        color: var(--vscode-button-secondaryForeground);
+      }
+      button.sync-btn {
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+        color: white;
+        font-size: 1.05em;
+        margin-top: 10px;
+      }
+
+      input {
+        width: 100%;
+        padding: 10px;
+        background: var(--vscode-input-background);
+        border: 1px solid var(--vscode-input-border);
+        color: var(--vscode-input-foreground);
+        border-radius: var(--radius);
+        margin-bottom: 12px;
       }
 
       .action-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 10px;
-        margin-top: 15px;
+        gap: 12px;
+        margin-top: 20px;
       }
-      .sync-btn {
-        grid-column: 1 / -1;
-        background-color: var(--vscode-statusBarItem-prominentBackground);
-        color: var(--vscode-settings-focusedRowBackground); 
-        color: white; 
-        font-size: 1.1em;
-        padding: 14px;
-        font-weight: bold;
-      }
-      
-      /* Status Banner */
-      .status-banner {
-        padding: 15px;
-        margin-bottom: 20px;
-        text-align: center;
-        background-color: var(--vscode-statusBar-background);
-        color: var(--vscode-statusBar-foreground);
-        border-bottom: 1px solid var(--vscode-panel-border);
-        font-weight: bold;
-        display: none;
-      }
-      .status-banner.connected {
-        display: block;
-      }
+      .sync-btn-container { grid-column: 1 / -1; }
 
-      /* Inputs */
-      input[type="text"], input[type="password"] {
-        width: 100%;
-        padding: 8px;
-        margin-bottom: 10px;
-        background-color: var(--input-bg);
-        color: var(--input-fg);
-        border: 1px solid var(--input-border);
-        border-radius: 2px;
-        box-sizing: border-box; /* Prevents overflow */
-      }
+      .provider-info .type { font-weight: bold; font-size: 0.95em; }
+      .provider-info .detail { font-size: 0.8em; opacity: 0.6; }
+      .remove-btn { color: var(--vscode-errorForeground); background: none; width: auto; font-size: 1.2em; padding: 4px; }
 
-      /* Utilities */
-      .hidden { display: none !important; }
-      .mt-4 { margin-top: 16px; }
-      .text-small { font-size: 0.9em; opacity: 0.8; margin-bottom: 8px; display: block;}
-      .flex-row { display: flex; gap: 10px; }
-
-      /* Media Query for Larger Screens (Panel Mode) */
-      @media (min-width: 500px) {
-          .container {
-              padding: 30px;
-          }
-          .action-grid {
-             grid-template-columns: repeat(3, 1fr);
-          }
-          .sync-btn {
-              grid-column: auto;
-          }
-      }
+      hr { border: none; border-top: 1px solid var(--glass-border); margin: 30px 0; }
     </style>
   </head>
   <body>
+    <div id="syncingIndicator">
+        <div class="spinner"></div>
+        <span>Syncing...</span>
+    </div>
+
     <div class="container">
-      <!-- Section 1: Connected Providers -->
-      <h2 style="margin-top: 0; margin-bottom: 16px;">Connected Providers</h2>
-      <div id="providerList" class="provider-list">
-          <!-- Dynamic Items -->
-      </div>
-      <div id="emptyState" class="hidden" style="text-align: center; padding: 20px; opacity: 0.6;">
-          <p>No providers connected yet. Add one below to get started.</p>
+      <h2 style="margin-top: 0; font-weight: 800;">Connected Storage</h2>
+      <div id="providerList" class="provider-list"></div>
+      <div id="emptyState" class="hidden" style="text-align: center; padding: 40px; opacity: 0.5;">
+          <p>No connections yet. Add one below.</p>
       </div>
       
-      <!-- Section 2: Quick Actions (only visible when providers exist) -->
-      <div id="actionsSection" class="hidden" style="margin-top: 20px;">
-          <h3 style="margin-top:0; margin-bottom: 12px; text-align:center;">Quick Actions</h3>
+      <div id="actionsSection" class="hidden">
           <div class="action-grid">
-              <button id="syncBtn" class="sync-btn">🔄 Sync All</button>
-              <button id="pushBtn">⬆️ Push All</button>
-              <button id="pullBtn">⬇️ Pull All</button>
+              <div class="sync-btn-container">
+                  <button id="syncBtn" class="sync-btn">🔄 Full Sync</button>
+              </div>
+              <button id="pushBtn">⬆️ Push</button>
+              <button id="pullBtn">⬇️ Pull</button>
           </div>
       </div>
       
-      <hr style="margin: 30px 0; border: 0; border-top: 1px solid var(--vscode-panel-border);">
+      <hr>
       
-      <!-- Section 3: Add Provider -->
-      <h2 style="margin-bottom: 16px;">Add Provider</h2>
+      <h2 style="font-weight: 800;">Profiles</h2>
+      <div id="profileList" class="profile-list">
+          <p style="opacity: 0.6; font-size: 0.9em;">Syncing all VS Code profiles...</p>
+      </div>
+      
+      <hr>
+      
+      <h2 style="font-weight: 800;">Add Storage</h2>
       
       <div class="section-header" data-section="gist">
-          <span><img src="${webview.asWebviewUri(Uri.joinPath(extensionUri, 'resources', 'github-mark.svg'))}" class="github-logo" alt="GitHub">GitHub Gist (Cloud Storage)</span>
+          <span>GitHub Gist (Cloud)</span>
           <span>▼</span>
       </div>
       <div id="section-gist" class="section-content">
-          <span class="text-small">Use GitHub Gist to sync your settings.</span>
-          <br><br>
-          <button id="gistOAuthBtn">GitHub Login (Auto)</button>
-          <button id="gistTokenToggleBtn" class="secondary">Enter Token Manually</button>
+          <button id="gistOAuthBtn">Quick Connect with GitHub</button>
+          <button id="gistTokenToggleBtn" class="secondary">Manual Token</button>
           
-          <div id="gist-token" class="hidden mt-4">
-              <input type="password" id="gistTokenInput" placeholder="ghp_..." >
-              <button id="saveGistTokenBtn">Save</button>
+          <div id="gist-token" class="hidden" style="margin-top: 12px;">
+              <input type="password" id="gistTokenInput" placeholder="Enter Personal Access Token">
+              <button id="saveGistTokenBtn">Connect</button>
           </div>
       </div>
 
       <div class="section-header" data-section="local">
-          <span>💾 Local File</span>
+          <span>💾 Local File System</span>
           <span>▼</span>
       </div>
       <div id="section-local" class="section-content">
-          <span class="text-small">Use local filesystem as storage.</span>
-          <br><br>
-          <div class="flex-row">
-              <button id="connectLocalBtn" style="flex:2">Connect Local</button>
-              <button id="changeLocalPathBtn" class="secondary" style="flex:1">Folder...</button>
+          <div style="display: flex; gap: 8px;">
+              <button id="connectLocalBtn" style="flex: 2;">Confirm Location</button>
+              <button id="changeLocalPathBtn" class="secondary" style="flex: 1;">Browse...</button>
           </div>
       </div>
       
-      <p style="text-align: center; font-size: 0.8em; opacity: 0.6; margin-top: 30px;">
-          Antigravity Extension
+      <p style="text-align: center; font-size: 0.75em; opacity: 0.4; margin-top: 40px;">
+          CECS • Cross-Editor Configuration Sync
       </p>
     </div>
 
     <script nonce="${nonce}">
       const vscode = acquireVsCodeApi();
       
-      window.addEventListener('load', () => {
-          vscode.postMessage({ type: 'checkState' });
-      });
+      window.addEventListener('load', () => vscode.postMessage({ type: 'checkState' }));
 
       window.addEventListener('message', event => {
           const message = event.data;
-          try {
-              switch (message.type) {
-                  case 'connected':
-                      // Now receives providers array
-                      updateDashboard(message.providers);
-                      break;
-                  case 'pathChanged':
-                       // Trigger refresh
-                       vscode.postMessage({ type: 'checkState' });
-                       break;
-
-              }
-          } catch (e) {
-              console.error('[CECS] Error handling message:', e);
+          if (message.type === 'connected') {
+              updateDashboard(message.providers);
+              updateProfiles(message.profiles);
           }
+          if (message.type === 'syncing') toggleSyncing(message.state);
       });
+
+      function toggleSyncing(state) {
+          document.getElementById('syncingIndicator').style.display = state ? 'flex' : 'none';
+      }
+
+      function updateProfiles(profiles) {
+          const list = document.getElementById('profileList');
+          if (!profiles || (!profiles.custom || profiles.custom.length === 0)) {
+              list.innerHTML = '<p style="opacity: 0.6; font-size: 0.9em;">✓ Syncing default profile</p>';
+              return;
+          }
+          
+          list.innerHTML = '';
+          
+          // Show default profile
+          const defaultDiv = document.createElement('div');
+          defaultDiv.className = 'provider-item';
+          defaultDiv.innerHTML = \`
+              <div class="provider-info">
+                  <div class="type">⭐ \${profiles.default.name}</div>
+                  <div class="detail">Default Profile</div>
+              </div>
+          \`;
+          list.appendChild(defaultDiv);
+          
+          // Show custom profiles
+          profiles.custom.forEach(p => {
+              const div = document.createElement('div');
+              div.className = 'provider-item';
+              div.innerHTML = \`
+                  <div class="provider-info">
+                      <div class="type">\${p.icon || '📁'} \${p.name}</div>
+                      <div class="detail">Custom Profile</div>
+                  </div>
+              \`;
+              list.appendChild(div);
+          });
+      }
 
       function updateDashboard(providers) {
           const list = document.getElementById('providerList');
-          const emptyState = document.getElementById('emptyState');
-          const actionsSection = document.getElementById('actionsSection');
-          
-          // Update provider list
+          const empty = document.getElementById('emptyState');
+          const actions = document.getElementById('actionsSection');
           list.innerHTML = '';
           
           if (!providers || providers.length === 0) {
-              // Show empty state message
-              emptyState.classList.remove('hidden');
-              actionsSection.classList.add('hidden');
+              empty.classList.remove('hidden');
+              actions.classList.add('hidden');
           } else {
-              // Hide empty state, show actions
-              emptyState.classList.add('hidden');
-              actionsSection.classList.remove('hidden');
-              
-              // Render provider cards
+              empty.classList.add('hidden');
+              actions.classList.remove('hidden');
               providers.forEach(p => {
                   const div = document.createElement('div');
                   div.className = 'provider-item';
-                  
-                  let detail = '';
-                  let icon = '';
-                  if (p.type === 'gist') {
-                      icon = '📝';
-                      detail = 'Gist Storage';
-                  } else if (p.type === 'local') {
-                      icon = '💾';
-                      detail = p.config ? p.config.path : 'Local Path';
-                  }
-                  
+                  const detail = p.type === 'local' ? (p.config ? p.config.path : '') : 'GitHub Cloud';
                   div.innerHTML = \`
                       <div class="provider-info">
-                          <span class="provider-type">\${icon} \${p.name || p.type.toUpperCase()}</span>
-                          <span class="provider-detail">\${detail}</span>
+                          <div class="type">\${p.type === 'gist' ? '📝' : '💾'} \${p.name}</div>
+                          <div class="detail">\${detail}</div>
                       </div>
                       <button class="remove-btn" data-provider-id="\${p.id}">🗑️</button>
                   \`;
@@ -330,91 +315,41 @@ export function getHtmlForWebview(webview: Webview, extensionUri: Uri): string {
               });
           }
       }
-      
-      function removeProvider(id) {
-          vscode.postMessage({ type: 'removeProvider', id: id });
+
+      /* Core Handlers */
+      function setupClick(id, action) {
+          document.getElementById(id)?.addEventListener('click', action);
       }
 
-      function resetConnection() {
-          // Legacy reset, mostly unused now
-          vscode.postMessage({ type: 'reset' });
-      }
-
-      /* Reuse existing helpers */
-      function toggleSection(id) {
-          const targetSection = document.getElementById('section-' + id);
-          const isActive = targetSection.classList.contains('active');
-          
-          // Close all sections
-          document.querySelectorAll('.section-content').forEach(el => el.classList.remove('active'));
-          
-          // If it wasn't active, open it (true toggle behavior)
-          if (!isActive) {
-              targetSection.classList.add('active');
-          }
-      }
-
-      function toggleInput(id) {
-          const el = document.getElementById(id);
-          if (el) {
-              el.classList.toggle('hidden');
-          }
-      }
-
-      function startOAuth(provider) {
-          vscode.postMessage({ type: 'startOAuth', provider: provider });
-      }
-
-      function saveToken(provider) {
-          const token = document.getElementById(provider + 'TokenInput').value;
-          if(token) {
-              vscode.postMessage({ type: 'saveToken', token: token, provider: provider });
-          }
-      }
-
-      function connectLocal() {
-          vscode.postMessage({ type: 'connectLocal' });
-      }
-
-      function changeLocalPath() {
-          vscode.postMessage({ type: 'changeLocalPath' });
-      }
-      
-      function sendAction(cmd) {
-          vscode.postMessage({ type: 'action', cmd: cmd });
-      }
-      
-      // Event Listeners (CSP-compliant)
-      document.addEventListener('DOMContentLoaded', () => {
-          // Action buttons
-          document.getElementById('syncBtn')?.addEventListener('click', () => sendAction('sync'));
-          document.getElementById('pushBtn')?.addEventListener('click', () => sendAction('push'));
-          document.getElementById('pullBtn')?.addEventListener('click', () => sendAction('pull'));
-          
-          // Setup buttons
-          document.getElementById('gistOAuthBtn')?.addEventListener('click', () => startOAuth('gist'));
-          document.getElementById('gistTokenToggleBtn')?.addEventListener('click', () => toggleInput('gist-token'));
-          document.getElementById('saveGistTokenBtn')?.addEventListener('click', () => saveToken('gist'));
-          document.getElementById('connectLocalBtn')?.addEventListener('click', connectLocal);
-          document.getElementById('changeLocalPathBtn')?.addEventListener('click', changeLocalPath);
-          
-          // Section headers
-          document.querySelectorAll('.section-header').forEach(header => {
-              header.addEventListener('click', () => {
-                  const section = header.getAttribute('data-section');
-                  if (section) toggleSection(section);
+      document.querySelectorAll('.section-header').forEach(h => {
+          h.addEventListener('click', () => {
+              const s = h.getAttribute('data-section');
+              document.querySelectorAll('.section-content').forEach(c => {
+                  if (c.id === 'section-'+s) c.classList.toggle('active');
+                  else c.classList.remove('active');
               });
           });
-          
-          // Event delegation for dynamically created remove buttons
-          document.getElementById('providerList')?.addEventListener('click', (e) => {
-              const target = e.target;
-              if (target.classList.contains('remove-btn')) {
-                  const providerId = target.getAttribute('data-provider-id');
-                  if (providerId) removeProvider(providerId);
-              }
-          });
       });
+
+      // Event delegation for remove buttons
+      document.getElementById('providerList')?.addEventListener('click', (e) => {
+          if (e.target.classList.contains('remove-btn')) {
+              const id = e.target.getAttribute('data-provider-id');
+              if (id) vscode.postMessage({type:'removeProvider', id: id});
+          }
+      });
+
+      setupClick('syncBtn', () => vscode.postMessage({type:'action', cmd:'sync'}));
+      setupClick('pushBtn', () => vscode.postMessage({type:'action', cmd:'push'}));
+      setupClick('pullBtn', () => vscode.postMessage({type:'action', cmd:'pull'}));
+      setupClick('gistOAuthBtn', () => vscode.postMessage({type:'startOAuth', provider:'gist'}));
+      setupClick('gistTokenToggleBtn', () => document.getElementById('gist-token').classList.toggle('hidden'));
+      setupClick('saveGistTokenBtn', () => {
+          const t = document.getElementById('gistTokenInput').value;
+          if(t) vscode.postMessage({type:'saveToken', token:t});
+      });
+      setupClick('connectLocalBtn', () => vscode.postMessage({type:'connectLocal'}));
+      setupClick('changeLocalPathBtn', () => vscode.postMessage({type:'changeLocalPath'}));
     </script>
   </body>
 </html>`;

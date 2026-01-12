@@ -5,10 +5,12 @@ import { LocalFileProvider } from '../storage/LocalFileProvider';
 import { IStorageProvider, EditorConfig, SavedProvider } from '../storage/IStorageProvider';
 
 export class SyncManager {
+    private pushTimer?: NodeJS.Timeout;
+
     constructor(private readonly secrets: SecretStorage) {}
 
     /**
-     * 저장된 모든 Provider의 인스턴스를 초기화하여 반환
+     * Initialize and return instances of all saved providers.
      */
     private async initProviders(): Promise<IStorageProvider[]> {
         const providersStr = await this.secrets.get('cecs_providers');
@@ -37,7 +39,7 @@ export class SyncManager {
         }
 
         if (savedProviders.length === 0) {
-            throw new Error('연결된 저장소가 없습니다. 먼저 저장소를 추가하세요.');
+            throw new Error('No linked storage. Please add a storage first.');
         }
 
         const instances: IStorageProvider[] = [];
@@ -56,7 +58,7 @@ export class SyncManager {
                         await p.connect({ token, gistId });
                     } catch (error: any) {
                         // If Gist ID is invalid, try creating a new one
-                        if (error.message.includes('유효하지 않은 Gist ID')) {
+                        if (error.message.includes('Invalid Gist ID')) {
                             console.log('Invalid Gist ID detected, creating new Gist...');
                             await this.secrets.delete('cecs_gist_id');
                             await p.connect({ token }); // Create new Gist
@@ -84,18 +86,21 @@ export class SyncManager {
         }
 
         if (instances.length === 0) {
-            throw new Error('유효한 저장소 연결이 없습니다.');
+            throw new Error('No valid storage connection found.');
         }
 
         return instances;
     }
 
     /**
-     * Push: 로컬 설정을 모든 저장소에 업로드
+     * Push: Upload local settings to all providers.
+     * @param quiet If true, minimal notification will be shown.
      */
-    async push(): Promise<void> {
+    async push(quiet = false): Promise<void> {
         try {
-            window.showInformationMessage('⬆️ Syncing to all providers...');
+            if (!quiet) {
+                window.showInformationMessage('⬆️ Syncing to all providers...');
+            }
 
             const config = await extractConfig();
             const providers = await this.initProviders();
@@ -107,7 +112,7 @@ export class SyncManager {
                 window.showWarningMessage(
                     `Some providers failed (${failed.length}/${providers.length})`
                 );
-            } else {
+            } else if (!quiet) {
                 window.showInformationMessage('✅ All providers updated!');
             }
         } catch (error: any) {
@@ -117,8 +122,8 @@ export class SyncManager {
     }
 
     /**
-     * Pull: 저장소에서 설정을 다운로드 (첫 번째 성공한 것 사용 or 병합?)
-     * 현재 정책: 첫 번째로 성공한 Provider의 설정을 사용 (우선순위: 리스트 순서)
+     * Pull: Download settings from providers.
+     * Policy: Use settings from the first successful provider (Priority: list order).
      */
     async pull(): Promise<void> {
         try {
@@ -154,7 +159,24 @@ export class SyncManager {
     }
 
     /**
-     * Sync: Push (Pull은 아직 미니멀하게)
+     * Debounced push for auto-sync.
+     */
+    async debouncedPush(delay = 5000): Promise<void> {
+        if (this.pushTimer) {
+            clearTimeout(this.pushTimer);
+        }
+
+        this.pushTimer = setTimeout(async () => {
+            try {
+                await this.push(true);
+            } catch (e) {
+                console.error('Auto-push failed', e);
+            }
+        }, delay);
+    }
+
+    /**
+     * Sync: Push (Pull is still minimal).
      */
     async sync(): Promise<void> {
         await this.push();

@@ -79,7 +79,7 @@ export class SetupPanel {
                             canSelectFiles: false,
                             canSelectFolders: true,
                             canSelectMany: false,
-                            openLabel: '백업 폴더 선택'
+                            openLabel: 'Select Backup Folder'
                         });
                         if (uri && uri[0]) {
                             const newPath = uri[0].fsPath;

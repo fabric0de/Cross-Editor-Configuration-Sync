@@ -281,10 +281,69 @@ export class Syncer {
         const currentExtensions = await this.getExtensions();
         const missingExtensions = extensions.filter((ext) => !currentExtensions.includes(ext));
 
-        if (missingExtensions.length > 0) {
-            const message = `Missing extensions: ${missingExtensions.join(', ')}. Please install them manually.`;
-            vscode.window.showInformationMessage(message);
+        if (missingExtensions.length === 0) {
+            return;
         }
+
+        // Check if auto-install is enabled
+        const config = vscode.workspace.getConfiguration('cecs');
+        const autoInstall = config.get<boolean>('autoInstallExtensions', true);
+
+        if (!autoInstall) {
+            // Just notify if auto-install is disabled
+            const message = `Missing ${missingExtensions.length} extension(s). Please install them manually.`;
+            vscode.window.showInformationMessage(message);
+            return;
+        }
+
+        // Auto-install extensions
+        vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: `Installing ${missingExtensions.length} extension(s)...`,
+                cancellable: false
+            },
+            async (progress) => {
+                let installed = 0;
+                const failed: string[] = [];
+
+                for (const extensionId of missingExtensions) {
+                    try {
+                        progress.report({
+                            message: `${extensionId} (${installed + 1}/${missingExtensions.length})`,
+                            increment: 100 / missingExtensions.length
+                        });
+
+                        await vscode.commands.executeCommand(
+                            'workbench.extensions.installExtension',
+                            extensionId
+                        );
+                        installed++;
+                    } catch (e) {
+                        console.error(`Failed to install ${extensionId}`, e);
+                        failed.push(extensionId);
+                    }
+                }
+
+                // Show result
+                if (failed.length === 0) {
+                    vscode.window
+                        .showInformationMessage(
+                            `✅ Installed ${installed} extension(s)! Reload to activate.`,
+                            'Reload Window'
+                        )
+                        .then((selection) => {
+                            if (selection === 'Reload Window') {
+                                vscode.commands.executeCommand('workbench.action.reloadWindow');
+                            }
+                        });
+                } else {
+                    vscode.window.showWarningMessage(
+                        `⚠️ Installed ${installed}/${missingExtensions.length} extensions. Failed: ${failed.join(', ')}`
+                    );
+                }
+            }
+        );
     }
 }
 

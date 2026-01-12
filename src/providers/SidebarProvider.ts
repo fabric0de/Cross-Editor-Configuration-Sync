@@ -70,7 +70,7 @@ export class SidebarProvider implements WebviewViewProvider {
                         canSelectFiles: false,
                         canSelectFolders: true,
                         canSelectMany: false,
-                        openLabel: '백업 폴더 선택'
+                        openLabel: 'Select Backup Folder'
                     });
                     if (uri && uri[0]) {
                         const newPath = uri[0].fsPath;
@@ -173,6 +173,8 @@ export class SidebarProvider implements WebviewViewProvider {
     // Helper to send current state
     private async _sendState() {
         let providers: any[] = [];
+        let profiles: any = null;
+
         try {
             const providersStr = await this._secrets.get('cecs_providers');
 
@@ -206,10 +208,26 @@ export class SidebarProvider implements WebviewViewProvider {
                     console.warn('Migration check failed', e);
                 }
             }
+
+            // Read profile information
+            try {
+                const { getCurrentEditorType } = await import('../paths');
+                const { Syncer: syncerClass } = await import('../syncer');
+                const editorType = getCurrentEditorType();
+                const syncer = new syncerClass(editorType);
+                const allProfiles = await syncer.readAllProfiles();
+
+                profiles = {
+                    default: { name: allProfiles.default.name },
+                    custom: allProfiles.custom.map((p) => ({ name: p.name, icon: p.icon }))
+                };
+            } catch (e) {
+                console.error('Failed to read profiles', e);
+            }
         } catch (e: any) {
             console.error('Failed to read state', e);
         } finally {
-            this._view?.webview.postMessage({ type: 'connected', providers });
+            this._view?.webview.postMessage({ type: 'connected', providers, profiles });
         }
     }
 
