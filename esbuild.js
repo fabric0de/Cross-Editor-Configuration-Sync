@@ -1,5 +1,4 @@
 const esbuild = require("esbuild");
-const path = require("path");
 
 const args = process.argv.slice(2);
 const watch = args.includes("--watch");
