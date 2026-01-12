@@ -11,7 +11,7 @@ export class GistProvider implements IStorageProvider {
             auth: credentials.token
         });
 
-        // Use Gist ID if provided, otherwise create a new one
+        // Use Gist ID if provided, otherwise search for existing or create new
         if (credentials.gistId) {
             this.gistId = credentials.gistId;
             // Validation
@@ -22,27 +22,39 @@ export class GistProvider implements IStorageProvider {
                 throw new Error('Invalid Gist ID.');
             }
         } else {
-            // Create new Gist
-            const response = await this.octokit.gists.create({
-                description: 'CECS Configuration Sync',
-                public: false,
-                files: {
-                    'config.json': {
-                        content: JSON.stringify(
-                            {
-                                settings: {},
-                                keybindings: [],
-                                snippets: {},
-                                extensions: []
-                            },
-                            null,
-                            2
-                        )
+            // Search for existing CECS Gist
+            const gists = await this.octokit.gists.list();
+            const existingGist = gists.data.find(
+                (gist) => gist.description === 'CECS Configuration Sync'
+            );
+
+            if (existingGist) {
+                // Reuse existing Gist
+                this.gistId = existingGist.id;
+                this.connected = true;
+            } else {
+                // Create new Gist only if none exists
+                const response = await this.octokit.gists.create({
+                    description: 'CECS Configuration Sync',
+                    public: false,
+                    files: {
+                        'config.json': {
+                            content: JSON.stringify(
+                                {
+                                    settings: {},
+                                    keybindings: [],
+                                    snippets: {},
+                                    extensions: []
+                                },
+                                null,
+                                2
+                            )
+                        }
                     }
-                }
-            });
-            this.gistId = response.data.id;
-            this.connected = true;
+                });
+                this.gistId = response.data.id;
+                this.connected = true;
+            }
         }
     }
 

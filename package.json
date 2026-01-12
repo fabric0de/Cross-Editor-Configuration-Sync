@@ -2,7 +2,7 @@
   "name": "cross-editor-configuration-sync",
   "displayName": "Cross-Editor Configuration Sync",
   "description": "Sync your settings, keybindings, snippets, and profiles across different IDEs (VS Code, Cursor, Antigravity, Windsurf, VSCodium, IDX)",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": "fabric0de",
   "repository": {
     "type": "git",
