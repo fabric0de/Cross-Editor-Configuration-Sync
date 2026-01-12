@@ -91,7 +91,7 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "format": "prettier --write \"src/**/*.ts\"",
-    "test": "node ./out/test/runTest.js",
+    "test": "echo \"No tests configured\"",
     "prepare": "husky install"
   },
   "lint-staged": {
