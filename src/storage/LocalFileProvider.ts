@@ -5,8 +5,8 @@ import * as vscode from 'vscode';
 import { IStorageProvider, EditorConfig } from './IStorageProvider';
 
 export class LocalFileProvider implements IStorageProvider {
-    private filePath: string = '';
-    private connected: boolean = false;
+    private filePath = '';
+    private connected = false;
 
     constructor() {
         this.updateFilePath();
@@ -30,11 +30,11 @@ export class LocalFileProvider implements IStorageProvider {
         }
     }
 
-    async connect(credentials?: any): Promise<void> {
-        // 경로 재확인 (설정이 변경되었을 수 있음)
+    async connect(_credentials?: any): Promise<void> {
+        // Re-check path (configuration may have changed)
         this.updateFilePath();
-        
-        // 디렉토리 생성
+
+        // Create directory
         const dir = path.dirname(this.filePath);
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
@@ -44,7 +44,7 @@ export class LocalFileProvider implements IStorageProvider {
 
     async read(): Promise<EditorConfig | null> {
         if (!this.connected) {
-            throw new Error('먼저 connect()를 호출하세요.');
+            throw new Error('Please call connect() first.');
         }
 
         if (!fs.existsSync(this.filePath)) {
@@ -57,7 +57,7 @@ export class LocalFileProvider implements IStorageProvider {
 
     async write(config: EditorConfig): Promise<void> {
         if (!this.connected) {
-            throw new Error('먼저 connect()를 호출하세요.');
+            throw new Error('Please call connect() first.');
         }
 
         fs.writeFileSync(this.filePath, JSON.stringify(config, null, 2), 'utf8');

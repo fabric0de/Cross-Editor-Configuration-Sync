@@ -1,6 +1,49 @@
 # Change Log
 
-All notable changes to the "Cross-Editor Configuration Sync" extension will be documented in this file.
+All notable changes to the \"Cross-Editor Configuration Sync\" extension will be documented in this file.
+
+## [0.2.0] - 2026-01-13
+
+### 🎉 Major Features
+
+#### Real-time Auto-Sync
+- **Auto-sync on change**: Automatically push settings when VS Code configuration files change
+- **Smart debouncing**: 5-second delay to prevent excessive cloud uploads
+- **Configuration toggle**: `cecs.autoSync` setting to enable/disable
+- Monitors `settings.json`, `keybindings.json`, and `snippets/` directory
+
+#### Modern UI/UX Overhaul
+- **✨ Glassmorphism design**: Beautiful semi-transparent cards with blur effects
+- **🎨 Smooth animations**: FadeIn, slideUp, slideDown, and hover transitions
+- **🔄 Floating sync indicator**: Real-time \"Syncing...\" status in bottom-right corner
+- **📊 Improved layouts**: Clean, modern provider and profile cards
+- **🎯 Gradient buttons**: Eye-catching sync button with purple gradient
+
+#### VS Code Native Profile Integration
+- **Automatic profile detection**: Reads all VS Code profiles from `profiles.json`
+- **Complete profile sync**: Default + all custom profiles synced together
+- **Cross-editor compatible**: Works with VS Code, Cursor, Windsurf, VSCodium
+- **Profile display**: Shows all synced profiles in sidebar UI
+- Push from any profile → all profiles backed up
+- Pull to new machine → all profiles restored
+
+#### Automatic Extension Installation
+- **One-click install**: Missing extensions installed automatically when pulling
+- **Progress indicator**: Real-time installation progress with extension names
+- **Smart detection**: Compares installed vs. required extensions
+- **Error handling**: Gracefully handles installation failures
+- **Configuration toggle**: `cecs.autoInstallExtensions` setting (default: true)
+- **Reload prompt**: Offers to reload window after successful installation
+
+### 🐛 Bug Fixes
+- Fixed provider deletion button not working (CSP inline onclick issue)
+- Resolved event delegation pattern for better CSP compliance
+
+### 🔧 Infrastructure
+- Migrated to ESLint v9 Flat Config
+- Updated TypeScript and linting rules
+- Improved bundling with esbuild
+- Code quality improvements with Prettier integration
 
 ## [0.0.1] - 2026-01-07
 

@@ -15,22 +15,22 @@ export interface SavedProvider {
 
 export interface IStorageProvider {
     /**
-     * 저장소에 연결하고 인증합니다.
+     * Connect and authenticate to the storage.
      */
     connect(credentials: any): Promise<void>;
 
     /**
-     * 저장소에서 설정 데이터를 읽어옵니다.
+     * Read configuration data from the storage.
      */
     read(): Promise<EditorConfig | null>;
 
     /**
-     * 저장소에 설정 데이터를 저장합니다.
+     * Write configuration data to the storage.
      */
     write(config: EditorConfig): Promise<void>;
 
     /**
-     * 연결 상태를 확인합니다.
+     * Check the connection status.
      */
     isConnected(): boolean;
 }

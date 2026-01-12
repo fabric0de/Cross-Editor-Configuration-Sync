@@ -19,7 +19,7 @@ export interface EditorConfig {
     keybindings: any[];
     snippets: { [name: string]: any };
     extensions: string[];
-    
+
     // NEW: Multi-profile support
     profiles?: {
         default: ProfileConfig;
@@ -59,7 +59,7 @@ export class Syncer {
             try {
                 // Strip comments if necessary (JSONC). VS Code files are often JSONC.
                 // Simple workaround: use a JSONC parser or just simple strip if simple.
-                // For now, let's assume standard JSON or try to parse. 
+                // For now, let's assume standard JSON or try to parse.
                 // In production, use 'jsonc-parser'.
                 const content = fs.readFileSync(filePath, 'utf8');
                 return parse(content) || {};
@@ -87,8 +87,8 @@ export class Syncer {
     private async getExtensions(): Promise<string[]> {
         // Use VS Code API to get installed extensions
         return vscode.extensions.all
-            .filter(ext => !ext.packageJSON.isBuiltin)
-            .map(ext => ext.id);
+            .filter((ext) => !ext.packageJSON.isBuiltin)
+            .map((ext) => ext.id);
     }
 
     public async writeLocalConfig(config: EditorConfig): Promise<void> {
@@ -146,7 +146,7 @@ export class Syncer {
                 return data;
             }
         }
-        
+
         // Try Antigravity's globalStorage/storage.json
         const storageJsonPath = path.join(this.userDataDir, 'globalStorage', 'storage.json');
         if (fs.existsSync(storageJsonPath)) {
@@ -158,7 +158,7 @@ export class Syncer {
                 };
             }
         }
-        
+
         return null;
     }
 
@@ -176,7 +176,7 @@ export class Syncer {
         };
 
         const customProfiles: ProfileConfig[] = [];
-        
+
         // Read profile metadata (works for both VS Code and Antigravity)
         const profilesMetadata = this.readProfileMetadata();
         if (!profilesMetadata || !profilesMetadata.profiles) {
@@ -224,7 +224,7 @@ export class Syncer {
 
         // Read or create profiles.json
         const profilesJsonPath = path.join(this.userDataDir, 'profiles.json');
-        let profilesMetadata: any = this.readProfileMetadata() || { profiles: [] };
+        const profilesMetadata: any = this.readProfileMetadata() || { profiles: [] };
         if (!profilesMetadata.profiles) {
             profilesMetadata.profiles = [];
         }
@@ -261,7 +261,9 @@ export class Syncer {
             }
 
             // Add profile to metadata if not already present
-            const existingProfile = profilesMetadata.profiles.find((p: any) => p.name === profile.name);
+            const existingProfile = profilesMetadata.profiles.find(
+                (p: any) => p.name === profile.name
+            );
             if (!existingProfile) {
                 profilesMetadata.profiles.push({
                     name: profile.name,
@@ -277,12 +279,71 @@ export class Syncer {
 
     private async installExtensions(extensions: string[]): Promise<void> {
         const currentExtensions = await this.getExtensions();
-        const missingExtensions = extensions.filter(ext => !currentExtensions.includes(ext));
+        const missingExtensions = extensions.filter((ext) => !currentExtensions.includes(ext));
 
-        if (missingExtensions.length > 0) {
-             const message = `Missing extensions: ${missingExtensions.join(', ')}. Please install them manually.`;
-             vscode.window.showInformationMessage(message);
+        if (missingExtensions.length === 0) {
+            return;
         }
+
+        // Check if auto-install is enabled
+        const config = vscode.workspace.getConfiguration('cecs');
+        const autoInstall = config.get<boolean>('autoInstallExtensions', true);
+
+        if (!autoInstall) {
+            // Just notify if auto-install is disabled
+            const message = `Missing ${missingExtensions.length} extension(s). Please install them manually.`;
+            vscode.window.showInformationMessage(message);
+            return;
+        }
+
+        // Auto-install extensions
+        vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: `Installing ${missingExtensions.length} extension(s)...`,
+                cancellable: false
+            },
+            async (progress) => {
+                let installed = 0;
+                const failed: string[] = [];
+
+                for (const extensionId of missingExtensions) {
+                    try {
+                        progress.report({
+                            message: `${extensionId} (${installed + 1}/${missingExtensions.length})`,
+                            increment: 100 / missingExtensions.length
+                        });
+
+                        await vscode.commands.executeCommand(
+                            'workbench.extensions.installExtension',
+                            extensionId
+                        );
+                        installed++;
+                    } catch (e) {
+                        console.error(`Failed to install ${extensionId}`, e);
+                        failed.push(extensionId);
+                    }
+                }
+
+                // Show result
+                if (failed.length === 0) {
+                    vscode.window
+                        .showInformationMessage(
+                            `✅ Installed ${installed} extension(s)! Reload to activate.`,
+                            'Reload Window'
+                        )
+                        .then((selection) => {
+                            if (selection === 'Reload Window') {
+                                vscode.commands.executeCommand('workbench.action.reloadWindow');
+                            }
+                        });
+                } else {
+                    vscode.window.showWarningMessage(
+                        `⚠️ Installed ${installed}/${missingExtensions.length} extensions. Failed: ${failed.join(', ')}`
+                    );
+                }
+            }
+        );
     }
 }
 
@@ -290,36 +351,38 @@ export class Syncer {
  * Helper function to extract config from current editor
  */
 export async function extractConfig(): Promise<EditorConfig> {
-  const { getCurrentEditorType } = await import('./paths');
-  const editorType = getCurrentEditorType();
-  const syncer = new Syncer(editorType);
-  
-  // Read default profile (backward compatibility)
-  const defaultConfig = await syncer.readLocalConfig();
-  
-  // Read all profiles
-  const profiles = await syncer.readAllProfiles();
-  
-  return {
-      ...defaultConfig,  // Backward compatibility
-      profiles           // Multi-profile support
-  };
+    const { getCurrentEditorType } = await import('./paths');
+    const editorType = getCurrentEditorType();
+    const syncer = new Syncer(editorType);
+
+    // Read default profile (backward compatibility)
+    const defaultConfig = await syncer.readLocalConfig();
+
+    // Read all profiles
+    const profiles = await syncer.readAllProfiles();
+
+    return {
+        ...defaultConfig, // Backward compatibility
+        profiles // Multi-profile support
+    };
 }
 
 /**
  * Helper function to apply config to current editor
  */
 export async function applyLocalConfig(config: EditorConfig): Promise<void> {
-  const { getCurrentEditorType } = await import('./paths');
-  const editorType = getCurrentEditorType();
-  const syncer = new Syncer(editorType);
-  
-  // Apply default profile (backward compatibility)
-  await syncer.writeLocalConfig(config);
-  
-  // Apply custom profiles if present
-  if (config.profiles?.custom && config.profiles.custom.length > 0) {
-      await syncer.restoreCustomProfiles(config.profiles.custom);
-      vscode.window.showInformationMessage(`Restored ${config.profiles.custom.length} custom profile(s). Please reload to see them.`);
-  }
+    const { getCurrentEditorType } = await import('./paths');
+    const editorType = getCurrentEditorType();
+    const syncer = new Syncer(editorType);
+
+    // Apply default profile (backward compatibility)
+    await syncer.writeLocalConfig(config);
+
+    // Apply custom profiles if present
+    if (config.profiles?.custom && config.profiles.custom.length > 0) {
+        await syncer.restoreCustomProfiles(config.profiles.custom);
+        vscode.window.showInformationMessage(
+            `Restored ${config.profiles.custom.length} custom profile(s). Please reload to see them.`
+        );
+    }
 }
