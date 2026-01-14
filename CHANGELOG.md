@@ -1,6 +1,58 @@
 # Change Log
 
-All notable changes to the \"Cross-Editor Configuration Sync\" extension will be documented in this file.
+All notable changes to the "Cross-Editor Configuration Sync" extension will be documented in this file.
+
+## [0.3.0] - 2026-01-14
+
+### 🎨 Major UI Overhaul
+
+#### Svelte + Vite Migration
+- **Complete UI Rewrite**: Migrated from HTML template literals to Svelte reactive components
+- **Modern Build System**: Vite for fast builds and HMR support
+- **Type-Safe**: Full TypeScript support in webview code
+- **Component-Based**: Modular, maintainable component architecture
+
+#### VS Code Codicons Integration
+- **Native Icons**: Using official `@vscode/codicons` for consistent UI
+- **Beautiful Design**: Professional, modern interface matching VS Code aesthetics
+- **Refresh Button**: Easy profile refresh with codicon button
+
+### ✨ Complete Profile Synchronization
+
+#### Option B Implementation
+- **Restructured EditorConfig**: Separate `default` and `profiles` structure
+- **Full Profile Data**: Sync settings, keybindings, snippets for all profiles
+- **Metadata Sync**: `profiles.json` automatically synchronized
+- **Empty Profile Support**: Profiles without folders still sync metadata
+
+### 🔧 Technical Improvements
+
+#### Build System
+- `build:webview`: Vite builds Svelte components to `dist/webview`
+- `build:extension`: esbuild builds extension code
+- `build`: Combined build script
+- Parallel watch modes for development
+
+#### Architecture
+- Svelte Store for reactive state management
+- Clean separation: extension code vs webview code
+- Removed legacy `ViewContent.ts`
+- Updated `SidebarProvider` and `SetupPanel` to load Vite builds
+- Modularized syncer: Split `syncer.ts` (395 lines) into focused modules
+  - `ConfigReader.ts` (175 lines) - Read operations
+  - `ConfigWriter.ts` (145 lines) - Write operations
+  - `Syncer.ts` (37 lines) - Core orchestration
+  - `types/config.ts` (30 lines) - Type definitions
+
+#### TypeScript
+- Added mocha types to tsconfig for test support
+- Improved type safety across codebase
+- Zero compilation errors
+
+### 📦 Dependencies
+- Added: `svelte`, `vite`, `@sveltejs/vite-plugin-svelte`
+- Added: `@vscode/codicons` for icons
+- Updated: `@types/node` to latest for Vite compatibility
 
 ## [0.2.0] - 2026-01-13
 

@@ -10,7 +10,7 @@ import {
     workspace,
     commands
 } from 'vscode';
-import { getHtmlForWebview } from '../providers/ViewContent';
+import * as fs from 'fs';
 
 export class SetupPanel {
     public static currentPanel: SetupPanel | undefined;
@@ -54,7 +54,7 @@ export class SetupPanel {
     }
 
     private _getWebviewContent(webview: Webview, extensionUri: Uri) {
-        return getHtmlForWebview(webview, extensionUri);
+        return this._getHtmlForWebview(webview, extensionUri);
     }
 
     private _setWebviewMessageListener(webview: Webview) {
@@ -255,7 +255,21 @@ export class SetupPanel {
                 this._sendState();
             }
         } catch (error: any) {
-            window.showErrorMessage(`GitHub authentication failed: ${error.message}`);
+            window.showErrorMessage(`OAuth authentication failed: ${error.message}`);
         }
+    }
+
+    private _getHtmlForWebview(webview: Webview, extensionUri: Uri): string {
+        const htmlPath = Uri.joinPath(extensionUri, 'dist', 'webview', 'index.html');
+        let html = fs.readFileSync(htmlPath.fsPath, 'utf8');
+
+        // Replace asset paths with webview URIs
+        const assetsUri = webview.asWebviewUri(
+            Uri.joinPath(extensionUri, 'dist', 'webview', 'assets')
+        );
+
+        html = html.replace(/\/assets\//g, `${assetsUri}/`);
+
+        return html;
     }
 }

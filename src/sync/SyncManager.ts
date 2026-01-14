@@ -99,7 +99,7 @@ export class SyncManager {
     async push(quiet = false): Promise<void> {
         try {
             if (!quiet) {
-                window.showInformationMessage('⬆️ Syncing to all providers...');
+                window.showInformationMessage('Syncing to all providers...');
             }
 
             const config = await extractConfig();
@@ -127,7 +127,7 @@ export class SyncManager {
      */
     async pull(): Promise<void> {
         try {
-            window.showInformationMessage('⬇️ Downloading from providers...');
+            window.showInformationMessage('Downloading from providers...');
 
             const providers = await this.initProviders();
             let config: EditorConfig | null = null;

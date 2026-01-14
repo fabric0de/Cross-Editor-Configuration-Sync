@@ -12,7 +12,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Register Sidebar Provider
     const sidebarProvider = new SidebarProvider(context.extensionUri, context.secrets);
     context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider('cecs-sidebar-view', sidebarProvider)
+        vscode.window.registerWebviewViewProvider('cecs-sidebar', sidebarProvider)
     );
 
     context.subscriptions.push(

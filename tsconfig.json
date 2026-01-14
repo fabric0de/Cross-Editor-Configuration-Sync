@@ -9,11 +9,19 @@
         "sourceMap": true,
         "rootDir": "src",
         "strict": true,
-        "skipLibCheck": true,
-        "esModuleInterop": true
+        "types": [
+            "@types/node",
+            "@types/vscode",
+            "@types/mocha"
+        ],
+        "allowSyntheticDefaultImports": true
     },
     "exclude": [
         "node_modules",
-        ".vscode-test"
+        ".vscode-test",
+        "out",
+        "dist",
+        "webview",
+        "vite.config.ts"
     ]
 }

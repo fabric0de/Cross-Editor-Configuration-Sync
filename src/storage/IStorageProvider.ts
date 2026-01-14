@@ -1,7 +1,35 @@
+// Option B: Complete structure redesign
 export interface EditorConfig {
-    settings: any;
-    keybindings: any[];
-    snippets: { [name: string]: any };
+    // Default profile (clearly separated)
+    default: {
+        settings: any;
+        keybindings: any[];
+        snippets: { [name: string]: any };
+        extensions: string[];
+    };
+    // Profile system
+    profiles?: {
+        metadata: ProfilesMetadata; // profiles.json content
+        custom: ProfileConfig[]; // Custom profile data
+    };
+}
+
+export interface ProfilesMetadata {
+    profiles: Array<{
+        name: string;
+        location: string;
+        icon?: string;
+        useDefaultFlags?: any;
+    }>;
+}
+
+export interface ProfileConfig {
+    name: string;
+    icon?: string;
+    location: string;
+    settings?: any;
+    keybindings?: any[];
+    snippets?: { [name: string]: any };
     extensions: string[];
 }
 
