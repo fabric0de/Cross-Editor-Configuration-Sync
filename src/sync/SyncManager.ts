@@ -3,11 +3,17 @@ import { extractConfig, applyLocalConfig } from '../syncer';
 import { GistProvider } from '../storage/GistProvider';
 import { LocalFileProvider } from '../storage/LocalFileProvider';
 import { IStorageProvider, EditorConfig, SavedProvider } from '../storage/IStorageProvider';
+import { ProfileSyncHelper } from '../core/syncer/ProfileSyncHelper';
+import { getCurrentEditorType, getUserDataDir } from '../paths';
 
 export class SyncManager {
     private pushTimer?: NodeJS.Timeout;
 
-    constructor(private readonly secrets: SecretStorage) {}
+    constructor(
+        private readonly secrets: SecretStorage,
+        private readonly extensionPath: string,
+        private readonly appRoot: string
+    ) {}
 
     /**
      * Initialize and return instances of all saved providers.
@@ -99,21 +105,31 @@ export class SyncManager {
     async push(quiet = false): Promise<void> {
         try {
             if (!quiet) {
-                window.showInformationMessage('Syncing to all providers...');
+                window.showInformationMessage('Deep scanning config...');
             }
 
             const config = await extractConfig();
+
             const providers = await this.initProviders();
+            let successCount = 0;
 
-            const results = await Promise.allSettled(providers.map((p) => p.write(config)));
+            for (const p of providers) {
+                try {
+                    await p.write(config);
+                    successCount++;
+                } catch (e) {
+                    console.error('Push failed to one provider', e);
+                }
+            }
 
-            const failed = results.filter((r) => r.status === 'rejected');
-            if (failed.length > 0) {
-                window.showWarningMessage(
-                    `Some providers failed (${failed.length}/${providers.length})`
+            if (successCount === 0) {
+                throw new Error('Failed to push to any provider.');
+            }
+
+            if (!quiet) {
+                window.showInformationMessage(
+                    `✅ Settings uploaded to ${successCount} provider(s)!`
                 );
-            } else if (!quiet) {
-                window.showInformationMessage('✅ All providers updated!');
             }
         } catch (error: any) {
             window.showErrorMessage(`Upload failed: ${error.message}`);
@@ -137,7 +153,6 @@ export class SyncManager {
                     const c = await p.read();
                     if (c) {
                         config = c;
-                        // successProvider = p.constructor.name;
                         break; // Found valid config
                     }
                 } catch (e) {
@@ -150,8 +165,18 @@ export class SyncManager {
                 return;
             }
 
-            await applyLocalConfig(config);
-            window.showInformationMessage('✅ Settings downloaded and applied!');
+            const mergedProfiles = await applyLocalConfig(config);
+
+            if (mergedProfiles && mergedProfiles.length > 0) {
+                // Initialize ProfileSyncHelper
+                const editorType = getCurrentEditorType();
+                const userDataDir = getUserDataDir(editorType);
+
+                const helper = new ProfileSyncHelper(this.extensionPath, userDataDir, this.appRoot);
+                await helper.syncProfilesWithRestart(mergedProfiles);
+            } else {
+                window.showInformationMessage('✅ Settings downloaded and applied!');
+            }
         } catch (error: any) {
             window.showErrorMessage(`Download failed: ${error.message}`);
             throw error;
@@ -161,25 +186,22 @@ export class SyncManager {
     /**
      * Debounced push for auto-sync.
      */
-    async debouncedPush(delay = 5000): Promise<void> {
+    debouncedPush(delay = 5000): void {
         if (this.pushTimer) {
             clearTimeout(this.pushTimer);
         }
-
-        this.pushTimer = setTimeout(async () => {
-            try {
-                await this.push(true);
-            } catch (e) {
-                console.error('Auto-push failed', e);
-            }
+        this.pushTimer = setTimeout(() => {
+            this.push(true).catch((err) => console.error('Auto-sync failed:', err));
         }, delay);
     }
 
     /**
-     * Sync: Push (Pull is still minimal).
+     * Full Sync: Push + Pull
      */
     async sync(): Promise<void> {
+        // Simple logic: push then pull
+        // (Or implementing merge strategy later)
         await this.push();
-        // await this.pull(); // Conflict resolution is hard
+        await this.pull();
     }
 }

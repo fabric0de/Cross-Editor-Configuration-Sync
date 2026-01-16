@@ -110,18 +110,55 @@ export class ConfigReader {
     }
 
     /**
-     * Read profiles.json metadata
+     * Read profiles.json metadata merged with storage.json userDataProfiles
+     * VSCode stores profiles in two locations:
+     * 1. profiles.json - legacy/synced profiles
+     * 2. globalStorage/storage.json -> userDataProfiles - locally created profiles
      */
     async readProfileMetadata(): Promise<ProfilesMetadata | null> {
         try {
-            const profilesJsonPath = path.join(this.userDataDir, 'profiles.json');
+            const allProfiles: Array<{ name: string; location: string; icon?: string }> = [];
+            const seenLocations = new Set<string>();
 
-            if (!fs.existsSync(profilesJsonPath)) {
+            // 1. Read from profiles.json
+            const profilesJsonPath = path.join(this.userDataDir, 'profiles.json');
+            if (fs.existsSync(profilesJsonPath)) {
+                const content = fs.readFileSync(profilesJsonPath, 'utf8');
+                const parsed = jsonc.parse(content) as ProfilesMetadata;
+                if (parsed?.profiles) {
+                    for (const profile of parsed.profiles) {
+                        if (!seenLocations.has(profile.location)) {
+                            allProfiles.push(profile);
+                            seenLocations.add(profile.location);
+                        }
+                    }
+                }
+            }
+
+            // 2. Read from globalStorage/storage.json -> userDataProfiles
+            const storageJsonPath = path.join(this.userDataDir, 'globalStorage', 'storage.json');
+            if (fs.existsSync(storageJsonPath)) {
+                const storageContent = fs.readFileSync(storageJsonPath, 'utf8');
+                const storageData = jsonc.parse(storageContent);
+                const userDataProfiles = storageData?.userDataProfiles as
+                    | Array<{ name: string; location: string; icon?: string }>
+                    | undefined;
+
+                if (userDataProfiles) {
+                    for (const profile of userDataProfiles) {
+                        if (!seenLocations.has(profile.location)) {
+                            allProfiles.push(profile);
+                            seenLocations.add(profile.location);
+                        }
+                    }
+                }
+            }
+
+            if (allProfiles.length === 0) {
                 return null;
             }
 
-            const content = fs.readFileSync(profilesJsonPath, 'utf8');
-            return jsonc.parse(content) as ProfilesMetadata;
+            return { profiles: allProfiles };
         } catch (error) {
             console.error('Error reading profile metadata:', error);
             return null;

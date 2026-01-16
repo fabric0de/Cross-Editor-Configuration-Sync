@@ -206,15 +206,24 @@ export class SidebarProvider implements WebviewViewProvider {
         // Read profiles using new modular syncer
         let profiles: any = {};
         try {
-            const { getCurrentEditorType } = await import('../paths');
-            const { Syncer: syncerClass } = await import('../syncer');
+            const { getCurrentEditorType, getUserDataDir } = await import('../paths');
+            const { Syncer: syncerClass } = await import('../core/syncer');
             const editorType = getCurrentEditorType();
+
+            // Debug Log
+            const userDataDir = getUserDataDir(editorType);
+            const path = await import('path');
+            const profilesPath = path.join(userDataDir, 'profiles.json');
+
             const syncer = new syncerClass(editorType);
             const config = await syncer.readLocalConfig();
 
+            const customProfiles = config.profiles?.custom || [];
+            window.showInformationMessage(`Path: ${profilesPath} (${customProfiles.length})`);
+
             profiles = {
                 default: config.default,
-                custom: config.profiles?.custom || []
+                custom: customProfiles
             };
         } catch (e) {
             console.error('Failed to read profiles', e);
@@ -225,6 +234,10 @@ export class SidebarProvider implements WebviewViewProvider {
 
     public revive(panel: WebviewView) {
         this._view = panel;
+    }
+
+    public refresh() {
+        this._sendState();
     }
 
     private async _startGitHubAuth() {

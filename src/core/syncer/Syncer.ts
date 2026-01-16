@@ -22,8 +22,9 @@ export class Syncer {
 
     /**
      * Write local configuration
+     * Returns merged profiles if profiles were synced, or empty array
      */
-    async writeLocalConfig(config: EditorConfig): Promise<void> {
+    async writeLocalConfig(config: EditorConfig): Promise<any[]> {
         return this.writer.writeLocalConfig(config);
     }
 

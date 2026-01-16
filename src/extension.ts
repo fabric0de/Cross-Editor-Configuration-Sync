@@ -7,7 +7,11 @@ import { getCurrentEditorType, getUserDataDir } from './paths';
 export function activate(context: vscode.ExtensionContext) {
     console.log('CECS is now active!');
 
-    const syncManager = new SyncManager(context.secrets);
+    const syncManager = new SyncManager(
+        context.secrets,
+        context.extensionUri.fsPath,
+        vscode.env.appRoot
+    );
 
     // Register Sidebar Provider
     const sidebarProvider = new SidebarProvider(context.extensionUri, context.secrets);
@@ -57,6 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand('cecs.pull', async () => {
             await syncManager.pull();
+            sidebarProvider.refresh();
         })
     );
 
@@ -64,6 +69,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand('cecs.sync', async () => {
             await syncManager.sync();
+            sidebarProvider.refresh();
         })
     );
 }
