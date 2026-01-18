@@ -110,32 +110,15 @@ export class ConfigReader {
     }
 
     /**
-     * Read profiles.json metadata merged with storage.json userDataProfiles
-     * VSCode stores profiles in two locations:
-     * 1. profiles.json - legacy/synced profiles
-     * 2. globalStorage/storage.json -> userDataProfiles - locally created profiles
+     * Read profiles metadata from globalStorage/storage.json -> userDataProfiles
+     * We no longer read from profiles.json as it is considered legacy/unused.
      */
     async readProfileMetadata(): Promise<ProfilesMetadata | null> {
         try {
             const allProfiles: Array<{ name: string; location: string; icon?: string }> = [];
             const seenLocations = new Set<string>();
 
-            // 1. Read from profiles.json
-            const profilesJsonPath = path.join(this.userDataDir, 'profiles.json');
-            if (fs.existsSync(profilesJsonPath)) {
-                const content = fs.readFileSync(profilesJsonPath, 'utf8');
-                const parsed = jsonc.parse(content) as ProfilesMetadata;
-                if (parsed?.profiles) {
-                    for (const profile of parsed.profiles) {
-                        if (!seenLocations.has(profile.location)) {
-                            allProfiles.push(profile);
-                            seenLocations.add(profile.location);
-                        }
-                    }
-                }
-            }
-
-            // 2. Read from globalStorage/storage.json -> userDataProfiles
+            // Read from globalStorage/storage.json -> userDataProfiles
             const storageJsonPath = path.join(this.userDataDir, 'globalStorage', 'storage.json');
             if (fs.existsSync(storageJsonPath)) {
                 const storageContent = fs.readFileSync(storageJsonPath, 'utf8');

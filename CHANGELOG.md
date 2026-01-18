@@ -2,6 +2,13 @@
 
 All notable changes to the "Cross-Editor Configuration Sync" extension will be documented in this file.
 
+## [0.3.2] - 2026-01-19
+
+### 🧹 Maintenance
+
+#### Cleanup Profile Discovery
+- Removed legacy dependency on `profiles.json`. The extension now exclusively uses `storage.json` (standard in modern VS Code flavors) to discover and synchronize profiles avoiding potential conflicts.
+
 ## [0.3.1] - 2026-01-16
 
 ### 🚀 Reliability Improvements
