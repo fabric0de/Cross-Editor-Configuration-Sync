@@ -2,6 +2,16 @@
 
 All notable changes to the "Cross-Editor Configuration Sync" extension will be documented in this file.
 
+## [0.3.1] - 2026-01-16
+
+### 🚀 Reliability Improvements
+
+#### Detached Profile Sync
+- **Process-Safe Updates**: Implemented a standalone helper script to update profiles while the IDE is closed, preventing the "overwrite on exit" issue.
+- **Robust Relaunch Strategy**: New relaunch logic prioritizes direct CLI binary execution (`code .` equivalent) for reliable restart, falling back to `osascript` and `open`.
+- **Zero-Delay Restart**: Optimized script to restart the editor immediately after profile updates.
+- **Cross-Platform Foundation**: Structured `ProfileSyncHelper` to support macOS (bash) and future Windows/Linux expansion.
+
 ## [0.3.0] - 2026-01-14
 
 ### 🎨 Major UI Overhaul

@@ -13,10 +13,11 @@ export class ConfigWriter {
 
     /**
      * Write local configuration
+     * Returns merged profiles if profiles were synced, or null
      */
-    async writeLocalConfig(config: EditorConfig): Promise<void> {
-        const userDataPath = this.userDataDir;
-        const userDir = path.join(userDataPath, 'User');
+    async writeLocalConfig(config: EditorConfig): Promise<any[]> {
+        // userDataDir already points to the User directory (e.g., ~/Library/.../Antigravity/User)
+        const userDir = this.userDataDir;
 
         // Write default profile
         await this.writeSettings(path.join(userDir, 'settings.json'), config.default.settings);
@@ -26,14 +27,19 @@ export class ConfigWriter {
         );
         await this.writeSnippets(path.join(userDir, 'snippets'), config.default.snippets);
 
+        let mergedProfiles: any[] = [];
+
         // Write profiles if present
         if (config.profiles) {
-            // Write profiles.json
-            await this.writeProfileMetadata(config.profiles.metadata);
+            // Get merged profile metadata (do NOT write to storage.json yet, as IDE will overwrite it)
+            // We return this list to be handled by the detached helper script
+            mergedProfiles = await this.getMergedProfiles(config.profiles.metadata);
 
-            // Write custom profiles
+            // Write custom profile data files (these won't be overwritten by IDE)
             await this.restoreCustomProfiles(config.profiles.custom);
         }
+
+        return mergedProfiles;
     }
 
     /**
@@ -90,20 +96,52 @@ export class ConfigWriter {
     }
 
     /**
-     * Write profiles.json metadata
+     * Get merged profile metadata (read storage.json + merge new profiles)
+     * Does NOT write to storage.json
      */
-    async writeProfileMetadata(metadata: any): Promise<void> {
+    async getMergedProfiles(metadata: any): Promise<any[]> {
         try {
-            const profilesJsonPath = path.join(this.userDataDir, 'profiles.json');
-            const dir = path.dirname(profilesJsonPath);
+            const storageJsonPath = path.join(this.userDataDir, 'globalStorage', 'storage.json');
+            console.log('[CECS DEBUG] getMergedProfiles - reading:', storageJsonPath);
 
-            if (!fs.existsSync(dir)) {
-                fs.mkdirSync(dir, { recursive: true });
+            // Read existing storage.json (even if potentially stale/cached by IDE, it's the best we have on disk)
+            let storageData: any = {};
+            if (fs.existsSync(storageJsonPath)) {
+                const content = fs.readFileSync(storageJsonPath, 'utf8');
+                storageData = JSON.parse(content);
             }
 
-            fs.writeFileSync(profilesJsonPath, JSON.stringify(metadata, null, 4), 'utf8');
+            // Merge profiles - keep existing profiles, add/update new ones
+            const existingProfiles: any[] = storageData.userDataProfiles || [];
+            const newProfiles: any[] = metadata.profiles || [];
+
+            const seenLocations = new Set<string>();
+            const mergedProfiles: any[] = [];
+
+            // Add new profiles first (they take priority)
+            for (const profile of newProfiles) {
+                if (!seenLocations.has(profile.location)) {
+                    mergedProfiles.push({
+                        name: profile.name,
+                        location: profile.location,
+                        ...(profile.icon && { icon: profile.icon })
+                    });
+                    seenLocations.add(profile.location);
+                }
+            }
+
+            // Keep existing profiles that weren't in new profiles
+            for (const profile of existingProfiles) {
+                if (!seenLocations.has(profile.location)) {
+                    mergedProfiles.push(profile);
+                    seenLocations.add(profile.location);
+                }
+            }
+
+            console.log('[CECS DEBUG] Merged profiles count:', mergedProfiles.length);
+            return mergedProfiles;
         } catch (error) {
-            console.error('Error writing profile metadata:', error);
+            console.error('[CECS DEBUG] Error merging profile metadata:', error);
             throw error;
         }
     }

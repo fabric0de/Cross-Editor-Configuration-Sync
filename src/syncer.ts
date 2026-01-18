@@ -21,13 +21,14 @@ export async function extractConfig(): Promise<EditorConfig> {
 
 /**
  * Apply configuration to local editor
+ * Returns merged profiles if profiles were synced
  */
-export async function applyLocalConfig(config: EditorConfig): Promise<void> {
+export async function applyLocalConfig(config: EditorConfig): Promise<any[]> {
     const { getCurrentEditorType } = await import('./paths');
     const editorType = getCurrentEditorType();
     const syncer = new CoreSyncer(editorType);
 
-    await syncer.writeLocalConfig(config);
+    return syncer.writeLocalConfig(config);
 }
 
 /**

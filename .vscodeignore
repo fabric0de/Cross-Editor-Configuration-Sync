@@ -3,6 +3,7 @@
 !package.json
 !dist/**
 !resources/**
+!scripts/**
 !README.md
 !CHANGELOG.md
 !LICENSE
