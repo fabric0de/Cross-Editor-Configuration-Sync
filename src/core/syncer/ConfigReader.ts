@@ -149,6 +149,23 @@ export class ConfigReader {
     }
 
     /**
+     * Read extensions.json from profile directory
+     */
+    async readExtensions(extensionsPath: string): Promise<string[]> {
+        try {
+            if (!fs.existsSync(extensionsPath)) {
+                return [];
+            }
+            const content = fs.readFileSync(extensionsPath, 'utf8');
+            const parsed = jsonc.parse(content);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+            console.error('Error reading profile extensions:', error);
+            return [];
+        }
+    }
+
+    /**
      * Read all custom profiles
      */
     async readAllProfiles(): Promise<ProfileConfig[]> {
@@ -176,7 +193,9 @@ export class ConfigReader {
                     ? await this.readKeybindings(path.join(profilePath, 'keybindings.json'))
                     : [],
                 snippets: exists ? await this.readSnippets(path.join(profilePath, 'snippets')) : {},
-                extensions: [] // Extensions are per-workspace, not per-profile in current VS Code
+                extensions: exists
+                    ? await this.readExtensions(path.join(profilePath, 'extensions.json'))
+                    : []
             };
 
             profiles.push(profileConfig);

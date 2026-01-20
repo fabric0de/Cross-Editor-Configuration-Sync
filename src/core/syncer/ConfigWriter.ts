@@ -26,6 +26,10 @@ export class ConfigWriter {
             config.default.keybindings
         );
         await this.writeSnippets(path.join(userDir, 'snippets'), config.default.snippets);
+        await this.writeExtensions(
+            path.join(userDir, 'extensions.json'),
+            config.default.extensions || []
+        );
 
         let mergedProfiles: any[] = [];
 
@@ -116,10 +120,12 @@ export class ConfigWriter {
             const newProfiles: any[] = metadata.profiles || [];
 
             const seenLocations = new Set<string>();
+            const seenNames = new Set<string>();
             const mergedProfiles: any[] = [];
 
             // Add new profiles first (they take priority)
             for (const profile of newProfiles) {
+                // Ensure uniqueness by name as well
                 if (!seenLocations.has(profile.location)) {
                     mergedProfiles.push({
                         name: profile.name,
@@ -127,14 +133,18 @@ export class ConfigWriter {
                         ...(profile.icon && { icon: profile.icon })
                     });
                     seenLocations.add(profile.location);
+                    seenNames.add(profile.name);
                 }
             }
 
-            // Keep existing profiles that weren't in new profiles
+            // Keep existing profiles that weren't in new profiles AND don't share a name
             for (const profile of existingProfiles) {
-                if (!seenLocations.has(profile.location)) {
+                // Skip if duplicate location OR duplicate name
+                // If a new profile has the same name as an old one, the new one (from Gist) wins.
+                if (!seenLocations.has(profile.location) && !seenNames.has(profile.name)) {
                     mergedProfiles.push(profile);
                     seenLocations.add(profile.location);
+                    seenNames.add(profile.name);
                 }
             }
 
@@ -175,6 +185,29 @@ export class ConfigWriter {
             if (profile.snippets) {
                 await this.writeSnippets(path.join(profilePath, 'snippets'), profile.snippets);
             }
+
+            if (profile.extensions && Array.isArray(profile.extensions)) {
+                await this.writeExtensions(
+                    path.join(profilePath, 'extensions.json'),
+                    profile.extensions
+                );
+            }
+        }
+    }
+
+    /**
+     * Write extensions.json
+     */
+    async writeExtensions(extensionsPath: string, extensions: string[]): Promise<void> {
+        try {
+            const dir = path.dirname(extensionsPath);
+            if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+            }
+            fs.writeFileSync(extensionsPath, JSON.stringify(extensions, null, 4), 'utf8');
+        } catch (error) {
+            console.error('Error writing extensions:', error);
+            throw error;
         }
     }
 }

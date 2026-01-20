@@ -165,6 +165,23 @@ export class SyncManager {
                 return;
             }
 
+            // Install extensions (Default + Custom Profiles) BEFORE restoring configs
+            // This prevents installing extensions from modifying the restored config
+            const allExtensions = new Set<string>(config.default.extensions || []);
+            if (config.profiles?.custom) {
+                for (const profile of config.profiles.custom) {
+                    if (profile.extensions) {
+                        profile.extensions.forEach((ext) => allExtensions.add(ext));
+                    }
+                }
+            }
+
+            if (allExtensions.size > 0) {
+                const { installExtensions } = await import('../syncer');
+                await installExtensions(Array.from(allExtensions));
+            }
+
+            // Restore configuration (overwrites any changes made by extensions)
             const mergedProfiles = await applyLocalConfig(config);
 
             if (mergedProfiles && mergedProfiles.length > 0) {

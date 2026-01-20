@@ -200,19 +200,13 @@ export class SidebarProvider implements WebviewViewProvider {
             console.error('Failed to read providers state', e);
         }
 
-        // ... (profiles reading)
-        // ... (profiles code omitted for brevity, assuming it remains same)
-
-        // Read profiles using new modular syncer
         let profiles: any = {};
         try {
-            const { getCurrentEditorType, getUserDataDir } = await import('../paths');
+            const { getCurrentEditorType } = await import('../paths');
             const { Syncer: syncerClass } = await import('../core/syncer');
             const editorType = getCurrentEditorType();
 
             // Debug Log
-            const userDataDir = getUserDataDir(editorType);
-            const path = await import('path');
 
             const syncer = new syncerClass(editorType);
             const config = await syncer.readLocalConfig();

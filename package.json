@@ -2,7 +2,7 @@
   "name": "cross-editor-configuration-sync",
   "displayName": "Cross-Editor Configuration Sync",
   "description": "Sync your settings, keybindings, snippets, and profiles across different IDEs (VS Code, Cursor, Antigravity, Windsurf, VSCodium, IDX)",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "publisher": "fabric0de",
   "repository": {
     "type": "git",
@@ -103,6 +103,7 @@
     "watch:webview": "vite build --watch",
     "watch:extension": "node esbuild.js --watch",
     "package": "npm run check-types && npm run lint && npm run build",
+    "vsix": "npm run package && npx @vscode/vsce package",
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
