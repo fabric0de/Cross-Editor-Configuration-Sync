@@ -150,6 +150,7 @@ export class ConfigReader {
 
     /**
      * Read extensions.json from profile directory
+     * Handles both VS Code's object format [{identifier: {id: "ext.id"}}] and simple string array ["ext.id"]
      */
     async readExtensions(extensionsPath: string): Promise<string[]> {
         try {
@@ -158,7 +159,22 @@ export class ConfigReader {
             }
             const content = fs.readFileSync(extensionsPath, 'utf8');
             const parsed = jsonc.parse(content);
-            return Array.isArray(parsed) ? parsed : [];
+            if (!Array.isArray(parsed)) {
+                return [];
+            }
+            // Handle both formats: object array (VS Code format) or string array
+            return parsed
+                .map((item: any) => {
+                    if (typeof item === 'string') {
+                        return item;
+                    }
+                    // VS Code extensions.json format: { identifier: { id: "publisher.name" } }
+                    if (item?.identifier?.id) {
+                        return item.identifier.id;
+                    }
+                    return null;
+                })
+                .filter((id): id is string => id !== null);
         } catch (error) {
             console.error('Error reading profile extensions:', error);
             return [];

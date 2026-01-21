@@ -2,6 +2,12 @@
 
 All notable changes to the "Cross-Editor Configuration Sync" extension will be documented in this file.
 
+## [0.3.4] - 2026-01-21
+
+### 🐛 Bug Fixes
+
+- **Extensions Parsing**: Fixed `n.toLowerCase is not a function` error when pulling settings. The `readExtensions` method now correctly handles VS Code's `extensions.json` object format (`{identifier: {id: "ext.id"}}`) by extracting extension IDs properly.
+
 ## [0.3.3] - 2026-01-20
 
 ### 🐛 Bug Fixes & Improvements
