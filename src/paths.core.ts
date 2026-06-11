@@ -55,10 +55,10 @@ export function determineUserDataDir(
                 return path.join(home, 'Library', 'Application Support', 'Code', 'User');
             case EditorType.Cursor:
                 return path.join(home, 'Library', 'Application Support', 'Cursor', 'User');
-            case EditorType.Antigravity:
-                return path.join(home, 'Library', 'Application Support', 'Antigravity', 'User');
             case EditorType.AntigravityIDE:
                 return path.join(home, 'Library', 'Application Support', 'Antigravity IDE', 'User');
+            case EditorType.Antigravity:
+                return path.join(home, 'Library', 'Application Support', 'Antigravity', 'User');
             case EditorType.Windsurf:
                 return path.join(home, 'Library', 'Application Support', 'Windsurf', 'User');
             case EditorType.VSCodium:
@@ -84,10 +84,10 @@ export function determineUserDataDir(
                 return path.join(appData, 'Code', 'User');
             case EditorType.Cursor:
                 return path.join(appData, 'Cursor', 'User');
-            case EditorType.Antigravity:
-                return path.join(appData, 'Antigravity', 'User');
             case EditorType.AntigravityIDE:
                 return path.join(appData, 'Antigravity IDE', 'User');
+            case EditorType.Antigravity:
+                return path.join(appData, 'Antigravity', 'User');
             case EditorType.Windsurf:
                 return path.join(appData, 'Windsurf', 'User');
             case EditorType.VSCodium:
@@ -113,10 +113,10 @@ export function determineUserDataDir(
                 return path.join(config, 'Code', 'User');
             case EditorType.Cursor:
                 return path.join(config, 'Cursor', 'User');
-            case EditorType.Antigravity:
-                return path.join(config, 'Antigravity', 'User');
             case EditorType.AntigravityIDE:
                 return path.join(config, 'Antigravity IDE', 'User');
+            case EditorType.Antigravity:
+                return path.join(config, 'Antigravity', 'User');
             case EditorType.Windsurf:
                 return path.join(config, 'Windsurf', 'User');
             case EditorType.VSCodium:
