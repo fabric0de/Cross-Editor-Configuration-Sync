@@ -19,11 +19,12 @@ Write-Host "[CECS Helper] Waiting for application to close..."
 $MaxRetries = 60
 $Count = 0
 
-function Check-Process {
+function Test-Process {
     if (-not [string]::IsNullOrWhiteSpace($AppExePath)) {
         $procs = Get-Process | Where-Object { $_.Path -eq $AppExePath }
         return ($null -ne $procs)
-    } else {
+    }
+    else {
         $procs = Get-Process -Name $AppName -ErrorAction SilentlyContinue
         return ($null -ne $procs)
     }
@@ -31,13 +32,14 @@ function Check-Process {
 
 if (-not [string]::IsNullOrWhiteSpace($AppExePath)) {
     Write-Host "[CECS Helper] Monitoring pattern: $AppExePath"
-} else {
+}
+else {
     Write-Host "[CECS Helper] Monitoring pattern: $AppName"
 }
 
 # Initial check: allow up to 5 seconds to detect the process initially
 for ($i = 1; $i -le 5; $i++) {
-    if (Check-Process) {
+    if (Test-Process) {
         Write-Host "[CECS Helper] Process detected. Watching for exit..."
         break
     }
@@ -46,7 +48,7 @@ for ($i = 1; $i -le 5; $i++) {
 }
 
 # Now wait for it to disappear
-while (Check-Process) {
+while (Test-Process) {
     Start-Sleep -Seconds 1
     $Count++
     if ($Count -ge $MaxRetries) {
@@ -77,13 +79,16 @@ try {
             Set-Content -Path $StoragePath -Value $jsonOutput -Encoding UTF8
 
             Write-Host "[CECS Helper] Updated storage.json"
-        } else {
+        }
+        else {
             Write-Host "[CECS Helper] Profiles file not found: $ProfilesFile"
         }
-    } else {
+    }
+    else {
         Write-Host "[CECS Helper] Storage file not found: $StoragePath"
     }
-} catch {
+}
+catch {
     Write-Host "[CECS Helper] Error: $_"
 }
 
@@ -93,7 +98,7 @@ if (Test-Path $ProfilesFile) {
 }
 
 # Relaunch function
-function Launch-App {
+function Start-App {
     Write-Host "Starting relaunch sequence..."
 
     if (-not [string]::IsNullOrWhiteSpace($AppExePath) -and (Test-Path $AppExePath)) {
@@ -101,7 +106,8 @@ function Launch-App {
         try {
             Start-Process -FilePath $AppExePath
             return
-        } catch {
+        }
+        catch {
             Write-Host "Launch via Start-Process failed: $_"
         }
     }
@@ -109,18 +115,19 @@ function Launch-App {
     Write-Host "Executing by Name: $AppName"
     try {
         Start-Process -FilePath $AppName
-    } catch {
+    }
+    catch {
         Write-Host "Launch via Start-Process failed: $_"
     }
 }
 
-Launch-App
+Start-App
 
 # Verify relaunch
 Write-Host "[CECS Helper] Verifying relaunch..."
 $Detected = $false
 for ($i = 1; $i -le 10; $i++) {
-    if (Check-Process) {
+    if (Test-Process) {
         Write-Host "[CECS Helper] Application relaunched successfully!"
         $Detected = $true
         break
