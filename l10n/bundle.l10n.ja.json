@@ -1,0 +1,7 @@
+{
+  "Registering {0} profile(s) requires restarting the IDE.\n\nRestart now?": "{0}個のプロファイルを適用させるためにIDEを再起動する必要があります。\n\n再起動しますか?",
+  "Restart": "再起動",
+  "Later": "後で",
+  "The IDE is restarting. Please wait a moment...": "IDEは再起動中です。少々お待ちください...",
+  "Failed to sync profiles: {0}": "プロファイルの同期に失敗: {0}"
+}

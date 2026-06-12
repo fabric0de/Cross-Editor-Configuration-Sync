@@ -148,13 +148,16 @@ export class ProfileSyncHelper {
 
         // Show confirmation dialog
         const action = await vscode.window.showWarningMessage(
-            `${profiles.length}개의 프로필을 등록하려면 IDE를 재시작해야 합니다.\n\n지금 재시작하시겠습니까?`,
+            vscode.l10n.t(
+                'Registering {0} profile(s) requires restarting the IDE.\n\nRestart now?',
+                profiles.length
+            ),
             { modal: true },
-            '재시작',
-            '나중에'
+            vscode.l10n.t('Restart'),
+            vscode.l10n.t('Later')
         );
 
-        if (action !== '재시작') {
+        if (action !== vscode.l10n.t('Restart')) {
             console.log('[CECS] User cancelled profile sync restart');
             return false;
         }
@@ -164,7 +167,9 @@ export class ProfileSyncHelper {
             await this.spawnProfileSync(profiles);
 
             // Show message and quit
-            vscode.window.showInformationMessage('IDE가 재시작됩니다. 잠시만 기다려주세요...');
+            vscode.window.showInformationMessage(
+                vscode.l10n.t('The IDE is restarting. Please wait a moment...')
+            );
 
             // Trigger quit
             await this.triggerIDERestart();
@@ -172,7 +177,8 @@ export class ProfileSyncHelper {
             return true;
         } catch (error) {
             console.error('[CECS] Profile sync error:', error);
-            vscode.window.showErrorMessage(`프로필 동기화 실패: ${error}`);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            vscode.window.showErrorMessage(vscode.l10n.t('Failed to sync profiles: {0}', errorMessage));
             return false;
         }
     }

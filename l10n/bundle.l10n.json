@@ -1,0 +1,7 @@
+{
+  "Registering {0} profile(s) requires restarting the IDE.\n\nRestart now?": "Registering {0} profile(s) requires restarting the IDE.\n\nRestart now?",
+  "Restart": "Restart",
+  "Later": "Later",
+  "The IDE is restarting. Please wait a moment...": "The IDE is restarting. Please wait a moment...",
+  "Failed to sync profiles: {0}": "Failed to sync profiles: {0}"
+}
