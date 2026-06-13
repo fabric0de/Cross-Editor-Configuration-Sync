@@ -33,7 +33,7 @@ export class ProfileSyncHelper {
         // We want ".../App.app"
         const appMatch = appRoot.match(/(.*\.app)/);
         this.appBundlePath = appMatch ? appMatch[1] : '';
-        
+
         // For Windows/Linux, the executable path is usually process.execPath
         this.appExePath = process.execPath;
 
