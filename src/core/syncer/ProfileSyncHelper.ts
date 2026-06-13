@@ -43,18 +43,10 @@ export class ProfileSyncHelper {
     }
 
     /**
-     * Get the appropriate script path for the current platform
+     * Get the appropriate script path
      */
     private getScriptPath(): string {
-        const platform = os.platform();
-
-        if (platform === 'darwin' || platform === 'linux') {
-            return path.join(this.scriptsDir, 'profile-sync-helper.sh');
-        } else if (platform === 'win32') {
-            return path.join(this.scriptsDir, 'profile-sync-helper.ps1');
-        }
-
-        throw new Error(`Unsupported platform: ${platform}`);
+        return path.join(this.scriptsDir, 'profile-sync-helper.js');
     }
 
     /**
@@ -69,7 +61,6 @@ export class ProfileSyncHelper {
      * Returns immediately - script runs in background and waits for IDE to close
      */
     async spawnProfileSync(profiles: ProfileData[]): Promise<void> {
-        const platform = os.platform();
         const scriptPath = this.getScriptPath();
         const storageJsonPath = this.getStorageJsonPath();
 
@@ -85,48 +76,26 @@ export class ProfileSyncHelper {
         console.log('[CECS] Script:', scriptPath);
         console.log('[CECS] Profiles file:', tempProfilesPath);
 
-        if (platform === 'darwin' || platform === 'linux') {
-            // Unix: spawn bash script
-            // Redirect output to a log file for debugging
-            const logFile = fs.openSync('/tmp/cecs_spawn.log', 'a');
-            const child = spawn(
-                'bash',
-                [scriptPath, this.appName, storageJsonPath, tempProfilesPath, this.appBundlePath],
-                {
-                    detached: true,
-                    stdio: ['ignore', logFile, logFile], // Redirect stdout/stderr to log file
-                    env: { ...process.env }
-                }
-            );
+        const child = spawn(
+            process.execPath,
+            [
+                scriptPath,
+                this.appName,
+                storageJsonPath,
+                tempProfilesPath,
+                this.appExePath,
+                this.appBundlePath
+            ],
+            {
+                detached: true,
+                stdio: 'ignore',
+                windowsHide: true,
+                env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }
+            }
+        );
 
-            child.unref(); // Allow parent to exit independently
-            console.log('[CECS] Helper script spawned with PID:', child.pid);
-        } else if (platform === 'win32') {
-            // Windows: spawn PowerShell script
-            const child = spawn(
-                'powershell.exe',
-                [
-                    '-ExecutionPolicy',
-                    'Bypass',
-                    '-File',
-                    scriptPath,
-                    this.appName,
-                    storageJsonPath,
-                    tempProfilesPath,
-                    this.appExePath
-                ],
-                {
-                    detached: true,
-                    stdio: 'ignore',
-                    windowsHide: true
-                }
-            );
-
-            child.unref();
-            console.log('[CECS] Helper script spawned with PID:', child.pid);
-        } else {
-            throw new Error(`Unsupported platform: ${platform}`);
-        }
+        child.unref(); // Allow parent to exit independently
+        console.log('[CECS] Helper script spawned with PID:', child.pid);
     }
 
     /**
