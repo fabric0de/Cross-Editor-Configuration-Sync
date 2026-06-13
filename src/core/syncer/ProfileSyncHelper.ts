@@ -1,8 +1,8 @@
 // Profile Sync Helper - Spawns detached scripts to modify storage.json when IDE is closed
-import * as path from 'path';
+import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
-import { spawn } from 'child_process';
+import * as path from 'path';
 import * as vscode from 'vscode';
 
 export interface ProfileData {
@@ -178,7 +178,9 @@ export class ProfileSyncHelper {
         } catch (error) {
             console.error('[CECS] Profile sync error:', error);
             const errorMessage = error instanceof Error ? error.message : String(error);
-            vscode.window.showErrorMessage(vscode.l10n.t('Failed to sync profiles: {0}', errorMessage));
+            vscode.window.showErrorMessage(
+                vscode.l10n.t('Failed to sync profiles: {0}', errorMessage)
+            );
             return false;
         }
     }
