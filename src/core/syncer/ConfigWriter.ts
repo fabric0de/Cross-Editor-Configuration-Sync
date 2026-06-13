@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { EditorConfig } from '../types/config';
 import { getUserDataDir, EditorType } from '../../paths';
+import * as vscode from 'vscode';
 
 export class ConfigWriter {
     private userDataDir: string;
@@ -195,15 +196,75 @@ export class ConfigWriter {
         }
     }
 
-    /**
-     * Write extensions.json
-     */
-    async writeExtensions(extensionsPath: string, extensions: string[]): Promise<void> {
+    async writeExtensions(extensionsPath: string, extensions: any[]): Promise<void> {
         try {
             const dir = path.dirname(extensionsPath);
             if (!fs.existsSync(dir)) {
                 fs.mkdirSync(dir, { recursive: true });
             }
+
+            // If extensions contains objects, we should preserve or reconstruct location data
+            if (extensions.length > 0 && typeof extensions[0] === 'object') {
+                const locationMap = new Map<string, any>();
+                if (fs.existsSync(extensionsPath)) {
+                    try {
+                        const existingContent = fs.readFileSync(extensionsPath, 'utf8');
+                        const existingExtensions = JSON.parse(existingContent);
+                        if (Array.isArray(existingExtensions)) {
+                            for (const ext of existingExtensions) {
+                                if (ext?.identifier?.id) {
+                                    locationMap.set(ext.identifier.id, {
+                                        location: ext.location,
+                                        relativeLocation: ext.relativeLocation
+                                    });
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.warn(
+                            'Failed to parse existing extensions.json for merging locations:',
+                            e
+                        );
+                    }
+                }
+
+                // Inject locations back
+                extensions = extensions.map((ext) => {
+                    if (ext?.identifier?.id) {
+                        const savedLoc = locationMap.get(ext.identifier.id);
+                        if (savedLoc) {
+                            return {
+                                ...ext,
+                                ...(savedLoc.location && { location: savedLoc.location }),
+                                ...(savedLoc.relativeLocation && {
+                                    relativeLocation: savedLoc.relativeLocation
+                                })
+                            };
+                        } else {
+                            // Try to reconstruct from current VS Code extensions API
+                            const localExt = vscode.extensions.getExtension(ext.identifier.id);
+                            if (localExt && localExt.extensionUri) {
+                                const uri = localExt.extensionUri;
+                                const location = {
+                                    $mid: 1,
+                                    fsPath: uri.fsPath,
+                                    _sep: 1,
+                                    path: uri.path,
+                                    scheme: uri.scheme
+                                };
+                                const relativeLocation = path.basename(uri.fsPath);
+                                return {
+                                    ...ext,
+                                    location,
+                                    relativeLocation
+                                };
+                            }
+                        }
+                    }
+                    return ext;
+                });
+            }
+
             fs.writeFileSync(extensionsPath, JSON.stringify(extensions, null, 4), 'utf8');
         } catch (error) {
             console.error('Error writing extensions:', error);
