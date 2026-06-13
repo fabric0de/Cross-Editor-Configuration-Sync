@@ -16,6 +16,7 @@ export class ProfileSyncHelper {
     private userDataDir: string;
     private appName: string;
     private appBundlePath: string;
+    private appExePath: string;
 
     constructor(
         private extensionPath: string,
@@ -27,14 +28,18 @@ export class ProfileSyncHelper {
         this.userDataDir = userDataDir;
         this.appName = appName;
 
-        // Extract .app bundle path from appRoot
+        // Extract .app bundle path from appRoot (for macOS)
         // appRoot is usually ".../App.app/Contents/Resources/app"
         // We want ".../App.app"
         const appMatch = appRoot.match(/(.*\.app)/);
         this.appBundlePath = appMatch ? appMatch[1] : '';
+        
+        // For Windows/Linux, the executable path is usually process.execPath
+        this.appExePath = process.execPath;
 
         console.log('[CECS] App Root:', appRoot);
         console.log('[CECS] App Bundle Path:', this.appBundlePath);
+        console.log('[CECS] App Exe Path:', this.appExePath);
     }
 
     /**
@@ -98,7 +103,6 @@ export class ProfileSyncHelper {
             console.log('[CECS] Helper script spawned with PID:', child.pid);
         } else if (platform === 'win32') {
             // Windows: spawn PowerShell script
-            // Note: Update PowerShell script to also accept file path
             const child = spawn(
                 'powershell.exe',
                 [
@@ -108,7 +112,8 @@ export class ProfileSyncHelper {
                     scriptPath,
                     this.appName,
                     storageJsonPath,
-                    tempProfilesPath
+                    tempProfilesPath,
+                    this.appExePath
                 ],
                 {
                     detached: true,

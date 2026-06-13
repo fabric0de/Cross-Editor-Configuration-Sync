@@ -21,12 +21,13 @@ $Count = 0
 
 function Test-Process {
     if (-not [string]::IsNullOrWhiteSpace($AppExePath)) {
-        $procs = Get-Process | Where-Object { $_.Path -eq $AppExePath }
-        return ($null -ne $procs)
+        $exeName = [System.IO.Path]::GetFileNameWithoutExtension($AppExePath)
+        $procs = Get-Process -Name $exeName -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $AppExePath }
+        return ($null -ne $procs -and ($procs.Count -gt 0 -or $procs.Id -gt 0))
     }
     else {
         $procs = Get-Process -Name $AppName -ErrorAction SilentlyContinue
-        return ($null -ne $procs)
+        return ($null -ne $procs -and ($procs.Count -gt 0 -or $procs.Id -gt 0))
     }
 }
 
