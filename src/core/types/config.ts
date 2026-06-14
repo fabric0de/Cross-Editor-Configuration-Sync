@@ -8,7 +8,7 @@ export interface ProfileConfig {
     settings?: any;
     keybindings?: any[];
     snippets?: { [name: string]: any };
-    extensions: string[];
+    extensions: string[] | any[];
 }
 
 export interface EditorConfig {
@@ -16,7 +16,7 @@ export interface EditorConfig {
         settings: any;
         keybindings: any[];
         snippets: { [name: string]: any };
-        extensions: string[];
+        extensions: string[] | any[];
     };
     profiles?: {
         metadata: ProfilesMetadata;

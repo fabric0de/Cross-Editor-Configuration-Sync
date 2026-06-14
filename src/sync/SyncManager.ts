@@ -171,7 +171,13 @@ export class SyncManager {
             if (config.profiles?.custom) {
                 for (const profile of config.profiles.custom) {
                     if (profile.extensions) {
-                        profile.extensions.forEach((ext) => allExtensions.add(ext));
+                        profile.extensions.forEach((ext: any) => {
+                            if (typeof ext === 'string') {
+                                allExtensions.add(ext);
+                            } else if (ext?.identifier?.id) {
+                                allExtensions.add(ext.identifier.id);
+                            }
+                        });
                     }
                 }
             }

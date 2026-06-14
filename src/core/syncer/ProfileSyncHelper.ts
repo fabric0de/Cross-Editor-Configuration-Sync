@@ -1,8 +1,8 @@
 // Profile Sync Helper - Spawns detached scripts to modify storage.json when IDE is closed
-import * as path from 'path';
+import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
-import { spawn } from 'child_process';
+import * as path from 'path';
 import * as vscode from 'vscode';
 
 export interface ProfileData {
@@ -16,6 +16,7 @@ export class ProfileSyncHelper {
     private userDataDir: string;
     private appName: string;
     private appBundlePath: string;
+    private appExePath: string;
 
     constructor(
         private extensionPath: string,
@@ -27,29 +28,25 @@ export class ProfileSyncHelper {
         this.userDataDir = userDataDir;
         this.appName = appName;
 
-        // Extract .app bundle path from appRoot
+        // Extract .app bundle path from appRoot (for macOS)
         // appRoot is usually ".../App.app/Contents/Resources/app"
         // We want ".../App.app"
         const appMatch = appRoot.match(/(.*\.app)/);
         this.appBundlePath = appMatch ? appMatch[1] : '';
 
+        // For Windows/Linux, the executable path is usually process.execPath
+        this.appExePath = process.execPath;
+
         console.log('[CECS] App Root:', appRoot);
         console.log('[CECS] App Bundle Path:', this.appBundlePath);
+        console.log('[CECS] App Exe Path:', this.appExePath);
     }
 
     /**
-     * Get the appropriate script path for the current platform
+     * Get the appropriate script path
      */
     private getScriptPath(): string {
-        const platform = os.platform();
-
-        if (platform === 'darwin' || platform === 'linux') {
-            return path.join(this.scriptsDir, 'profile-sync-helper.sh');
-        } else if (platform === 'win32') {
-            return path.join(this.scriptsDir, 'profile-sync-helper.ps1');
-        }
-
-        throw new Error(`Unsupported platform: ${platform}`);
+        return path.join(this.scriptsDir, 'profile-sync-helper.js');
     }
 
     /**
@@ -64,7 +61,6 @@ export class ProfileSyncHelper {
      * Returns immediately - script runs in background and waits for IDE to close
      */
     async spawnProfileSync(profiles: ProfileData[]): Promise<void> {
-        const platform = os.platform();
         const scriptPath = this.getScriptPath();
         const storageJsonPath = this.getStorageJsonPath();
 
@@ -80,48 +76,26 @@ export class ProfileSyncHelper {
         console.log('[CECS] Script:', scriptPath);
         console.log('[CECS] Profiles file:', tempProfilesPath);
 
-        if (platform === 'darwin' || platform === 'linux') {
-            // Unix: spawn bash script
-            // Redirect output to a log file for debugging
-            const logFile = fs.openSync('/tmp/cecs_spawn.log', 'a');
-            const child = spawn(
-                'bash',
-                [scriptPath, this.appName, storageJsonPath, tempProfilesPath, this.appBundlePath],
-                {
-                    detached: true,
-                    stdio: ['ignore', logFile, logFile], // Redirect stdout/stderr to log file
-                    env: { ...process.env }
-                }
-            );
+        const child = spawn(
+            process.execPath,
+            [
+                scriptPath,
+                this.appName,
+                storageJsonPath,
+                tempProfilesPath,
+                this.appExePath,
+                this.appBundlePath
+            ],
+            {
+                detached: true,
+                stdio: 'ignore',
+                windowsHide: true,
+                env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }
+            }
+        );
 
-            child.unref(); // Allow parent to exit independently
-            console.log('[CECS] Helper script spawned with PID:', child.pid);
-        } else if (platform === 'win32') {
-            // Windows: spawn PowerShell script
-            // Note: Update PowerShell script to also accept file path
-            const child = spawn(
-                'powershell.exe',
-                [
-                    '-ExecutionPolicy',
-                    'Bypass',
-                    '-File',
-                    scriptPath,
-                    this.appName,
-                    storageJsonPath,
-                    tempProfilesPath
-                ],
-                {
-                    detached: true,
-                    stdio: 'ignore',
-                    windowsHide: true
-                }
-            );
-
-            child.unref();
-            console.log('[CECS] Helper script spawned with PID:', child.pid);
-        } else {
-            throw new Error(`Unsupported platform: ${platform}`);
-        }
+        child.unref(); // Allow parent to exit independently
+        console.log('[CECS] Helper script spawned with PID:', child.pid);
     }
 
     /**
@@ -148,13 +122,16 @@ export class ProfileSyncHelper {
 
         // Show confirmation dialog
         const action = await vscode.window.showWarningMessage(
-            `${profiles.length}개의 프로필을 등록하려면 IDE를 재시작해야 합니다.\n\n지금 재시작하시겠습니까?`,
+            vscode.l10n.t(
+                'Registering {0} profile(s) requires restarting the IDE.\n\nRestart now?',
+                profiles.length
+            ),
             { modal: true },
-            '재시작',
-            '나중에'
+            vscode.l10n.t('Restart'),
+            vscode.l10n.t('Later')
         );
 
-        if (action !== '재시작') {
+        if (action !== vscode.l10n.t('Restart')) {
             console.log('[CECS] User cancelled profile sync restart');
             return false;
         }
@@ -164,7 +141,9 @@ export class ProfileSyncHelper {
             await this.spawnProfileSync(profiles);
 
             // Show message and quit
-            vscode.window.showInformationMessage('IDE가 재시작됩니다. 잠시만 기다려주세요...');
+            vscode.window.showInformationMessage(
+                vscode.l10n.t('The IDE is restarting. Please wait a moment...')
+            );
 
             // Trigger quit
             await this.triggerIDERestart();
@@ -172,7 +151,10 @@ export class ProfileSyncHelper {
             return true;
         } catch (error) {
             console.error('[CECS] Profile sync error:', error);
-            vscode.window.showErrorMessage(`프로필 동기화 실패: ${error}`);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            vscode.window.showErrorMessage(
+                vscode.l10n.t('Failed to sync profiles: {0}', errorMessage)
+            );
             return false;
         }
     }

@@ -1,0 +1,7 @@
+{
+    "Registering {0} profile(s) requires restarting the IDE.\n\nRestart now?": "{0}개의 프로필을 등록하려면 IDE를 재시작해야 합니다.\n\n지금 재시작하시겠습니까?",
+    "Restart": "재시작",
+    "Later": "나중에",
+    "The IDE is restarting. Please wait a moment...": "IDE가 재시작됩니다. 잠시만 기다려주세요...",
+    "Failed to sync profiles: {0}": "프로필 동기화 실패: {0}"
+}

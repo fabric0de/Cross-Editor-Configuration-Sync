@@ -1,11 +1,11 @@
 // Configuration Reader - reads local config and profiles
-import * as vscode from 'vscode';
 import * as fs from 'fs';
-import * as path from 'path';
 import * as jsonc from 'jsonc-parser';
-import type { EditorConfig, ProfileConfig } from '../types/config';
+import * as path from 'path';
+import * as vscode from 'vscode';
+import { EditorType, getUserDataDir } from '../../paths';
 import type { ProfilesMetadata } from '../../storage/IStorageProvider';
-import { getUserDataDir, EditorType } from '../../paths';
+import type { EditorConfig, ProfileConfig } from '../types/config';
 
 export class ConfigReader {
     private userDataDir: string;
@@ -152,7 +152,7 @@ export class ConfigReader {
      * Read extensions.json from profile directory
      * Handles both VS Code's object format [{identifier: {id: "ext.id"}}] and simple string array ["ext.id"]
      */
-    async readExtensions(extensionsPath: string): Promise<string[]> {
+    async readExtensions(extensionsPath: string): Promise<any[]> {
         try {
             if (!fs.existsSync(extensionsPath)) {
                 return [];
@@ -162,19 +162,22 @@ export class ConfigReader {
             if (!Array.isArray(parsed)) {
                 return [];
             }
-            // Handle both formats: object array (VS Code format) or string array
+            // Return either a string array (for default profile) or object array without location (for custom profiles)
             return parsed
                 .map((item: any) => {
                     if (typeof item === 'string') {
                         return item;
                     }
-                    // VS Code extensions.json format: { identifier: { id: "publisher.name" } }
-                    if (item?.identifier?.id) {
-                        return item.identifier.id;
+                    if (typeof item === 'object' && item !== null) {
+                        const copy = { ...item };
+                        // Remove environment-specific data before syncing
+                        delete copy.location;
+                        delete copy.relativeLocation;
+                        return copy;
                     }
                     return null;
                 })
-                .filter((id): id is string => id !== null);
+                .filter((item) => item !== null);
         } catch (error) {
             console.error('Error reading profile extensions:', error);
             return [];
