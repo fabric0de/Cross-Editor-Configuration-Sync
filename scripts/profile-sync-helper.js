@@ -32,18 +32,19 @@ function isAppRunning(callback) {
     if (process.platform === 'win32') {
         const exeName = appExePath ? path.basename(appExePath) : `${appName}.exe`;
         // Exclude our own PID
-        exec(`tasklist /FI "IMAGENAME eq ${exeName}" /NH`, (err, stdout) => {
+        exec(`tasklist /FI "IMAGENAME eq ${exeName}" /NH /FO CSV`, (err, stdout) => {
             if (err) return callback(false);
 
-            // tasklist output has the format: "Code.exe    12345 Console..."
+            // tasklist output has the format: "Code.exe","12345","Console",...
             // We need to check if there are any lines with the exeName that have a different PID
             const lines = stdout
                 .split('\n')
                 .filter((line) => line.toLowerCase().includes(exeName.toLowerCase()));
             const isOtherInstanceRunning = lines.some((line) => {
-                const parts = line.trim().split(/\s+/);
+                const parts = line.split('","');
                 if (parts.length >= 2) {
-                    const pid = parseInt(parts[1], 10);
+                    const pidStr = parts[1].replace(/"/g, '');
+                    const pid = parseInt(pidStr, 10);
                     if (!isNaN(pid)) {
                         return pid !== process.pid;
                     }
